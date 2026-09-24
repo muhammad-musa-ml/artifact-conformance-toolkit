@@ -1,0 +1,17 @@
+{
+  "_what_this_is": "The retraction declaration for {{artifact.slug}}. It is the needle set CHECK-16 hunts: every figure or claim this artifact has WITHDRAWN, in every spelling it could have been written in. It is machine-read, so it is JSON rather than prose, and it is committed, so the scan is reproducible from this directory alone.",
+  "_why_an_empty_list_is_a_real_answer": "An artifact that withdrew nothing still declares that it withdrew nothing. `retracted: []` with a review date is a dated, committed statement that somebody looked; the file being ABSENT is not, and CHECK-16 refuses that as a did-not-run rather than passing over it. A clean scan of a tree nobody reviewed is a sentence, not a measurement.",
+  "_fill_in_reviewed_on": "TODO(artifact:retractions) -- replace the empty `reviewed_on` below with the date you reviewed this artifact, as YYYY-MM-DD. It is deliberately NOT stamped at generation time: a date the generator wrote would agree with everything by construction and the check that reads it could never fail.",
+  "_needle_rules": "A figure has more than one spelling and a needle that knows only one of them reports a zero that means nothing, so list every form: 0.9882 and 98.82% are two needles, not one. A BARE-NUMERIC needle is adjudicated against its digit boundaries -- a match sitting inside a longer number is a false positive, counted and never a finding -- so prefer a needle carrying its unit where one exists. A WORD-FORM needle should carry `context_terms`: without them, ordinary English matching the phrase reads as a live claim.",
+  "reviewed_on": "",
+  "retracted": [],
+  "schema": "canonkit/retractions/1",
+  "schema_version": "canonkit/1",
+  "_example_entry": {
+    "id": "a-short-stable-name-for-the-thing-you-withdrew",
+    "withdrawn_on": "YYYY-MM-DD",
+    "why": "What was wrong with it. A retraction with no stated reason cannot be reviewed.",
+    "needles": ["0.0000", "0.00%"],
+    "context_terms": ["only needed for word-form needles"]
+  }
+}

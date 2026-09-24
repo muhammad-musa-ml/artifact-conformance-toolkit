@@ -1,0 +1,254 @@
+{
+  "bullet_fields": "TWO fields, because there are two different relationships and collapsing them double-counts a bullet. `bullets` is the canon project's OWN bullets -- the set an example project is responsible for backing; across the 11 canon paths it partitions all 49 exactly once. `backs_bullets` is what an ALREADY-EXISTING artifact is cited as backing. example-beta:P5-B3 is the case that forced the split: it is a bullet of example-beta P5 (beta-artifact-5) AND its backing field names Research/example-cache-benchmark. Both are true, so one `bullets` field would have claimed it twice and made the 49-bullet partition read as 50.",
+  "counts": {
+    "built_derived": 2,
+    "built_expected": 2,
+    "pending_derived": 12,
+    "pending_expected": 12,
+    "register_rows_derived": 12,
+    "register_rows_expected": 12,
+    "scanned_derived": 14,
+    "scanned_expected": 14
+  },
+  "derived_from": {
+    "canon_ids": "tools/canon-bullets.json",
+    "note": "Every canon, project and bullet id in this file was DERIVED from the committed canon snapshot, never transcribed. a design rule's 'derived by filtering, never typed' applies to the ids as much as to the counts."
+  },
+  "gpu_required_basis": "Read from the per-path Technology Stack in the project technology-stack document, not measured on the filesystem. alpha-artifact-4 serves a model on the RTX 4050; alpha-artifact-5 runs sentence-transformers embeddings and a QLoRA leg; beta-artifact-1 loads bge-m3 and bge-reranker-v2-m3. The other eleven need no GPU. This is a READING of a documented stack and is marked as such rather than presented as a measurement.",
+  "min_population_overrides": {},
+  "naming": {
+    "banned": "results/manifest.json",
+    "expected_set": "tools/manifest.json",
+    "figures": "results/figures.json",
+    "note": "G2's resolution travels WITH the expected set rather than living only in a plan. results/figures.json carries the numbers; this file carries the expected set; the banned spelling above is refused outright by the banned-spelling rule, and conformance.py FAILS on its existence in any artifact."
+  },
+  "scan_root": {
+    "conftest_constant": "SCAN_ROOT_RELATIVE",
+    "depth": 1,
+    "note": "Declared as a RULE relative to the repository root, never as an absolute path: a tracked file must not bake in a home directory, and the same rule must resolve correctly in every checkout. tools/tests/conftest.py declared the identical value; the two are one assertion with two ends, and a disagreement between them is the finding rather than a value to pick between. Enumeration stops at depth 1 -- that depth is the whole mechanism by which a design rule holds, because fixtures/broken-artifacts/ IS contained in the scan root and is never ENUMERATED by it.",
+    "relative_to_repo_root": ".."
+  },
+  "schema": "manifest/1",
+  "schema_version": 1,
+  "slugs": [
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-beta:P1-B1",
+        "example-beta:P1-B2",
+        "example-beta:P1-B3",
+        "example-beta:P1-B4",
+        "example-beta:P1-B5",
+        "example-beta:P1-B6"
+      ],
+      "canon": "example-beta",
+      "gpu_required": true,
+      "project": "P1",
+      "register_row": true,
+      "scanned": true,
+      "slug": "beta-artifact-1",
+      "status": "pending"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-alpha:P6-B1",
+        "example-alpha:P6-B4",
+        "example-alpha:P6-B7"
+      ],
+      "canon": "example-alpha",
+      "gpu_required": false,
+      "project": "P6",
+      "register_row": true,
+      "scanned": true,
+      "slug": "alpha-artifact-6",
+      "status": "pending"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-beta:P5-B1",
+        "example-beta:P5-B2",
+        "example-beta:P5-B3",
+        "example-beta:P5-B4",
+        "example-beta:P5-B5",
+        "example-beta:P5-B6"
+      ],
+      "canon": "example-beta",
+      "gpu_required": false,
+      "project": "P5",
+      "register_row": true,
+      "scanned": true,
+      "slug": "beta-artifact-5",
+      "status": "pending"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [],
+      "canon": null,
+      "gpu_required": false,
+      "no_row_reason": "Program factoring, not a canon example project: it backs no canon bullet. The slug returns zero bullet-scoped hits in BOTH canons and has no build_paths entry in either.",
+      "project": null,
+      "register_row": false,
+      "scanned": true,
+      "slug": "alpha-substrate",
+      "status": "pending"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-beta:P3-B1",
+        "example-beta:P3-B2",
+        "example-beta:P3-B3",
+        "example-beta:P3-B4",
+        "example-beta:P3-B5"
+      ],
+      "canon": "example-beta",
+      "gpu_required": false,
+      "project": "P3",
+      "register_row": true,
+      "scanned": true,
+      "slug": "beta-artifact-3",
+      "status": "pending"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [],
+      "canon": null,
+      "gpu_required": false,
+      "no_row_reason": "Cited by no bullet in either canon. Verified with a BULLET-SCOPED probe: the document-scoped scan of example-beta returns 1 hit, at $.consistency_notes[13], whose text says this artifact is 'cited nowhere here' -- the canon affirming the exclusion, not contradicting it.",
+      "project": null,
+      "register_row": false,
+      "scanned": true,
+      "slug": "example-search-benchmark",
+      "status": "built"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-alpha:P1-B2",
+        "example-alpha:P1-B3",
+        "example-alpha:P1-B4",
+        "example-alpha:P1-B5",
+        "example-alpha:P1-B6"
+      ],
+      "canon": "example-alpha",
+      "gpu_required": false,
+      "project": "P1",
+      "register_row": true,
+      "scanned": true,
+      "slug": "alpha-artifact-1",
+      "status": "pending"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-beta:P4-B1",
+        "example-beta:P4-B2",
+        "example-beta:P4-B3",
+        "example-beta:P4-B4",
+        "example-beta:P4-B5",
+        "example-beta:P4-B6"
+      ],
+      "canon": "example-beta",
+      "gpu_required": false,
+      "project": "P4",
+      "register_row": true,
+      "scanned": true,
+      "slug": "beta-artifact-4",
+      "status": "pending"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-alpha:P2-B1",
+        "example-alpha:P2-B2",
+        "example-alpha:P2-B3"
+      ],
+      "canon": "example-alpha",
+      "gpu_required": false,
+      "project": "P2",
+      "register_row": true,
+      "scanned": true,
+      "slug": "alpha-artifact-2",
+      "status": "pending"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-beta:P2-B1",
+        "example-beta:P2-B2",
+        "example-beta:P2-B3",
+        "example-beta:P2-B4",
+        "example-beta:P2-B5",
+        "example-beta:P2-B7"
+      ],
+      "canon": "example-beta",
+      "gpu_required": false,
+      "project": "P2",
+      "register_row": true,
+      "scanned": true,
+      "slug": "beta-artifact-2",
+      "status": "pending"
+    },
+    {
+      "backs_bullets": [
+        "example-beta:P5-B3"
+      ],
+      "bullets": [],
+      "canon": "example-beta",
+      "gpu_required": false,
+      "project": null,
+      "register_row": true,
+      "scanned": true,
+      "slug": "example-cache-benchmark",
+      "status": "built"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-alpha:P5-B1",
+        "example-alpha:P5-B4",
+        "example-alpha:P5-B5"
+      ],
+      "canon": "example-alpha",
+      "gpu_required": true,
+      "project": "P5",
+      "register_row": true,
+      "scanned": true,
+      "slug": "alpha-artifact-5",
+      "status": "pending"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-alpha:P4-B1",
+        "example-alpha:P4-B3",
+        "example-alpha:P4-B4"
+      ],
+      "canon": "example-alpha",
+      "gpu_required": true,
+      "project": "P4",
+      "register_row": true,
+      "scanned": true,
+      "slug": "alpha-artifact-4",
+      "status": "pending"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-alpha:P3-B1",
+        "example-alpha:P3-B2",
+        "example-alpha:P3-B4"
+      ],
+      "canon": "example-alpha",
+      "gpu_required": false,
+      "project": "P3",
+      "register_row": true,
+      "scanned": true,
+      "slug": "alpha-artifact-3",
+      "status": "pending"
+    }
+  ],
+  "status_field": "a design rule extension ratified by the owner as the status rule. Values are built | pending. A pending slug whose directory EXISTS is a FINDING (the manifest is stale). A built slug whose directory is MISSING is a FAIL. pending reaching 0 is a project requirement's closeout criterion. status is owner/plan-set-set and is NEVER written by a build agent -- the same posture as a design rule's waivers."
+}

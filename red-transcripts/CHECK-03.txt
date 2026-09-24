@@ -1,0 +1,327 @@
+CHECK-03 -- THE RED TRANSCRIPT
+===========================================
+
+WHAT CHECK-03 REQUIRES, verbatim from the project requirements document:
+
+    Fails when the "what this does not show" section is absent, is
+    byte-identical to the template placeholder, falls under its word floor, or
+    contains no scope vocabulary -- an unedited template copy must not pass.
+
+THE CRITERION THIS REPLACES, AND WHY IT WAS AN UNRUN CHECK
+------------------------------------------------------------
+The inherited acceptance criterion was a heading count: grep the README for the
+limitations heading and require at least one hit. A COMPLETELY UNEDITED TEMPLATE
+COPY SATISFIES IT. The heading survives every copy untouched, so the criterion
+reports a pass over an artifact in which nobody has written a single word of the
+thing being checked. That is not a weak check; it is an unrun one.
+
+The heading is not even stable. The two artifacts that shipped before this
+program existed use two DIFFERENT limitations headings -- one calls the section
+"what this benchmark is NOT", the other "honest limits on these numbers" -- so a
+check keyed on either literal passes one artifact and fails the other. Both are
+measured, from the files, not supposed. This check therefore keys on the ANCHOR,
+`artifact:limits`, and never on heading text; the region is the addressing
+mechanism and the heading above it is free prose.
+
+WHAT MAKES THIS A REAL RED RATHER THAN A MISSING FILE
+------------------------------------------------------
+a design rule requires the transcript to be captured BEFORE the implementation commit,
+with commit order as the evidence. The trap in that requirement is that "before
+the implementation" reads as "before any code exists", and a transcript captured
+then records a module that could not be loaded or an input that was not there.
+Each of those exits non-zero, each satisfies a naive "non-zero exit" acceptance
+test, and none of them says anything about whether the check DISCRIMINATES.
+
+So tools/checks/check_03.py was REGISTERED AND RUNNABLE when this was captured.
+Discovery found it, it read the README, it located the region, it counted the
+words, it looked for the scope terms, it hashed the body against the committed
+placeholder constant, it cross-checked the LIVE skeleton, it reported a
+population and it wrote a structured report. ONE function was stubbed:
+
+    limits_findings()   returns no finding, whatever the body says
+
+READ THE QUOTED POPULATION LINE IN THE FIRST TWO FAILURES. It says
+
+    CHECK-03   PASS   found=0 checked=1 of 1 ... region=ABSENT words=0 of 40
+    scope-terms=0 documents=1 of 1 skeleton=checked
+
+and, for the unedited placeholder,
+
+    CHECK-03   PASS   found=0 checked=1 of 1 ... region=present words=22 of 40
+    scope-terms=0 documents=1 of 1 skeleton=checked
+
+The check MEASURED that the region was absent. It MEASURED twenty-two words
+against a floor of forty. It MEASURED zero scope terms. It even confirmed it
+could reach a live skeleton to cross-check against. And it printed PASS. That is
+precisely the shape a false RED cannot demonstrate: the inputs were real, the
+measurement happened, and only the verdict was wrong.
+
+THE FIXTURE, AND WHY IT IS DELIBERATELY BROKEN IN ONLY ONE WAY
+----------------------------------------------------------------------
+fixtures/broken-artifacts/broken-unedited-limits/ carries a limits body that is
+byte-identical to templates/README-SKELETON.md's own placeholder, hashing to the
+constant the plan that authored that skeleton recorded. Everything else about
+the tree is CORRECT on purpose: its figures record is well formed and every
+figure carries its denominator, so CHECK-01 passes over it. A fixture that failed
+several checks at once would make "the checker refused it" unable to say which
+check did the refusing, and the fixture would stop discriminating. One of the
+passing assertions in this run is exactly that.
+
+The fixture's own heading is deliberately NOT the skeleton's, so a check that
+quietly started keying on the heading again would report the tree clean and the
+test beside it would go red.
+
+REVIEW CRITERION FOR THIS FILE, stated so it can be checked rather than assumed:
+the failure lines below must name ASSERTIONS ON THE VERDICT. A transcript whose
+failure line instead names a failed module load, a collection failure, an absent
+input, or an argument parser rejecting a flag is a FALSE RED and must be rejected
+and recaptured. That is mechanically checkable with a case-insensitive grep over
+five shapes, and the plan states the pattern.
+
+ONE OF THOSE FIVE FIRED DURING THIS CAPTURE, and the repair is recorded here
+rather than quietly made. The first capture of this run held a genuine false RED:
+the anti-rot pin test read an expectation file that did not exist yet, and the
+resulting failure named an absent path instead of a verdict. The expectation file
+is a committed statement of the INTENDED verdict, so it belongs in the RED commit
+and not in the GREEN one -- with it present, the same test fails by comparing a
+stubbed verdict against the pinned one, which is the assertion it was written to
+make. The capture below is the re-run.
+
+THE PATTERN IS DELIBERATELY NOT PASTED HERE. A transcript that quoted its own
+needle set would match that grep against its own prose and fail the gate it
+exists to satisfy -- and the natural repair for that, excluding this file from
+the sweep, would put a hole exactly where the guard is supposed to be. The
+pattern lives in the plan's acceptance criteria. It returned 0 against this file
+when this was captured, and against the raw pytest output before it was framed.
+
+CAPTURED
+--------
+  command      .venv/Scripts/python.exe -m pytest tools/tests/test_check_03.py -q
+  cwd          <repo root>
+  interpreter  CPython 3.12.11, pytest 9.1.1
+  parent HEAD  8f7505d8ae3731127dd45afad715808c1909f2e8
+  redirection  > .reports/p0109-RED-check03.txt 2>&1   (never a pipe: a command
+               piped into another process returns the PIPE's exit status, not
+               the command's)
+
+VERBATIM OUTPUT
+---------------
+FFFFF....F.......FFF...                                                  [100%]
+================================== FAILURES ===================================
+_______ test_an_absent_region_in_a_region_bearing_document_is_a_finding _______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5873/test_an_absent_region_in_a_reg0')
+
+    def test_an_absent_region_in_a_region_bearing_document_is_a_finding(tmp_path):
+        """The document IS addressed by this mechanism and the region was removed."""
+        root = artifact(tmp_path, include_limits=False, slug="absent-region")
+        result = run_check(root, report=tmp_path / "absent.json")
+>       assert result.exit_code == core.EXIT_FINDING, (
+            "a region-bearing README with no limits region reported exit %d\n%s"
+            % (result.exit_code, result.stdout))
+E       AssertionError: a region-bearing README with no limits region reported exit 0
+E         CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=ABSENT words=0 of 40 scope-terms=0 documents=1 of 1 skeleton=checked
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=...sers/user/projects/artifact-conformance-toolkit'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-385i6yxu')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_03.py:151: AssertionError
+_______________ test_a_byte_identical_placeholder_is_a_finding ________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5873/test_a_byte_identical_placehol0')
+
+    def test_a_byte_identical_placeholder_is_a_finding(tmp_path):
+        """The condition a heading count cannot see."""
+        root = artifact(tmp_path, limits=PLACEHOLDER, slug="unedited")
+        result = run_check(root, report=tmp_path / "unedited.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=present words=22 of 40 scope-terms=0 documents=1 of 1 skeleton=checked
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=...sers/user/projects/artifact-conformance-toolkit'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-krhquzpy')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_03.py:163: AssertionError
+________________ test_a_body_under_the_word_floor_is_a_finding ________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5873/test_a_body_under_the_word_flo0')
+
+    def test_a_body_under_the_word_floor_is_a_finding(tmp_path):
+        """Thin, and nothing else: it carries scope vocabulary and no marker."""
+        root = artifact(tmp_path, limits=THIN, slug="thin")
+        result = run_check(root, report=tmp_path / "thin.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=present words=5 of 40 scope-terms=1 documents=1 of 1 skeleton=checked
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=...sers/user/projects/artifact-conformance-toolkit'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-pmuwh1vj')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_03.py:174: AssertionError
+______________ test_a_body_with_no_scope_vocabulary_is_a_finding ______________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5873/test_a_body_with_no_scope_voca0')
+
+    def test_a_body_with_no_scope_vocabulary_is_a_finding(tmp_path):
+        """Long enough, edited, marker-free -- and it bounds nothing."""
+        root = artifact(tmp_path, limits=NO_SCOPE, slug="no-scope")
+        result = run_check(root, report=tmp_path / "no-scope.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=present words=49 of 40 scope-terms=0 documents=1 of 1 skeleton=checked
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=...sers/user/projects/artifact-conformance-toolkit'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-h6uiy1qc')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_03.py:183: AssertionError
+________ test_a_body_still_carrying_the_skeletons_marker_is_a_finding _________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5873/test_a_body_still_carrying_the0')
+
+    def test_a_body_still_carrying_the_skeletons_marker_is_a_finding(tmp_path):
+        """Padded past the floor, with scope terms, still saying `replace this`."""
+        root = artifact(tmp_path, limits=check_03.SENTINEL + ": " + FILLED_IN,
+                        slug="sentinel")
+        result = run_check(root, report=tmp_path / "sentinel.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=present words=50 of 40 scope-terms=3 documents=1 of 1 skeleton=checked
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=...sers/user/projects/artifact-conformance-toolkit'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-sxsumvyw')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_03.py:195: AssertionError
+_________ test_the_committed_fixture_fails_and_names_every_condition __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5873/test_the_committed_fixture_fai0')
+
+    def test_the_committed_fixture_fails_and_names_every_condition(tmp_path):
+        fixture = conftest.broken_fixture(FIXTURE)
+        result = run_check(fixture, report=tmp_path / "fixture.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=present words=22 of 40 scope-terms=0 documents=1 of 1 skeleton=checked
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=...sers/user/projects/artifact-conformance-toolkit'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-sq_lxv2m')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_03.py:263: AssertionError
+____________ test_the_word_floor_override_is_effective_and_prints _____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5873/test_the_word_floor_override_i0')
+
+    def test_the_word_floor_override_is_effective_and_prints(tmp_path):
+        """The EFFECTIVE value prints, or the line lies about what it applied."""
+        root = artifact(tmp_path, limits=THIN, slug="word-floor")
+        lenient = run_check(root, "--word-floor", "3",
+                            report=tmp_path / "lenient.json")
+        assert "words=5 of 3" in lenient.stdout, lenient.stdout
+        assert lenient.report["word_floor"] == 3, lenient.report
+        assert "thin" not in kinds(lenient.report), lenient.report["findings"]
+    
+        strict = run_check(root, "--word-floor", "500",
+                           report=tmp_path / "strict.json")
+        assert "words=5 of 500" in strict.stdout, strict.stdout
+>       assert "thin" in kinds(strict.report), strict.report["findings"]
+E       AssertionError: []
+E       assert 'thin' in []
+E        +  where [] = kinds({'artifact': '\\home\\user\\AppData\\Local\\Temp\\pytest-of-user\\pytest-5873\\test_the_word_floor_override_i0\\w...sha256': '362845fb93863eb1a51dc78e4ea1438b23c05f08d8766a6883977119a07f3208', 'check_id': 'CHECK-03', 'checked': 1, ...})
+E        +    where {'artifact': '\\home\\user\\AppData\\Local\\Temp\\pytest-of-user\\pytest-5873\\test_the_word_floor_override_i0\\w...sha256': '362845fb93863eb1a51dc78e4ea1438b23c05f08d8766a6883977119a07f3208', 'check_id': 'CHECK-03', 'checked': 1, ...} = CliResult(exit_code=0, stdout='CHECK-03         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  region=...sers/user/projects/artifact-conformance-toolkit'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-4n3jem6l')).report
+
+tools\tests\test_check_03.py:369: AssertionError
+_________________ test_a_waiver_suppresses_one_named_finding __________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5873/test_a_waiver_suppresses_one_n0')
+
+    def test_a_waiver_suppresses_one_named_finding(tmp_path):
+        """The waiver is honoured by the CHECK; whether it was COMMITTED is the
+        runner's question, and the two are deliberately separate."""
+        root = artifact(tmp_path, limits=THIN, slug="waived")
+        contract = check_03.load_contract()
+        waived = check_03.run(root, contract.CheckContext(waivers=[{
+            "check_id": "CHECK-03", "finding_id": "limits:thin:README.md",
+            "reason": "the fixture is deliberately short",
+            "dated_at": "2026-09-15T00:00:00+03:00"}]))
+>       assert waived.waived == 1, waived
+E       AssertionError: CheckResult(check_id='CHECK-03', code=0, found=0, checked=1, floor=1, waived=0, skipped=0, listed=1, finding_ids=[], note='region=present words=5 of 40 scope-terms=1 documents=1 of 1 skeleton=checked')
+E       assert 0 == 1
+E        +  where 0 = CheckResult(check_id='CHECK-03', code=0, found=0, checked=1, floor=1, waived=0, skipped=0, listed=1, finding_ids=[], note='region=present words=5 of 40 scope-terms=1 documents=1 of 1 skeleton=checked').waived
+
+tools\tests\test_check_03.py:386: AssertionError
+____________ test_the_anti_rot_pin_holds_for_the_known_bad_fixture ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5873/test_the_anti_rot_pin_holds_fo0')
+
+    def test_the_anti_rot_pin_holds_for_the_known_bad_fixture(tmp_path):
+        fixture = conftest.broken_fixture(FIXTURE)
+        expectation_path = fixture / EXPECTATION_FILE
+        assert expectation_path.is_file(), (
+            "%s carries no %s, so its RED evidence has nothing pinning it"
+            % (FIXTURE, EXPECTATION_FILE))
+        expected = json.loads(expectation_path.read_text(encoding="ascii"))
+    
+        result = run_check(fixture, report=tmp_path / "pin.json")
+        assert result.report is not None, "the check wrote no structured report"
+        missing = [field for field in PINNED_FIELDS if field not in result.report]
+        assert not missing, (
+            "the live report no longer carries %r. A renamed field would otherwise "
+            "make this pin compare nothing." % missing)
+        measured = {field: result.report[field] for field in PINNED_FIELDS}
+>       assert measured == expected, (
+            "the structured report drifted from its committed expectation.\n"
+            "  expected: %r\n  measured: %r" % (expected, measured))
+E       AssertionError: the structured report drifted from its committed expectation.
+E           expected: {'check_id': 'CHECK-03', 'checked': 1, 'code': 1, 'finding_ids': ['limits:no-scope-vocabulary:README.md', 'limits:sentinel:README.md', 'limits:thin:README.md', 'limits:unedited:README.md'], 'found': 4, 'schema_version': 'canonkit/1'}
+E           measured: {'check_id': 'CHECK-03', 'code': 0, 'found': 0, 'checked': 1, 'finding_ids': [], 'schema_version': 'canonkit/1'}
+E       assert {'check_id': ...cked': 1, ...} == {'check_id': ...DME.md'], ...}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Differing items:
+E         {'found': 0} != {'found': 4}
+E         {'finding_ids': []} != {'finding_ids': ['limits:no-scope-vocabulary:README.md', 'limits:sentinel:README.md', 'limits:thin:README.md', 'limits:unedited:README.md']}
+E         {'code': 0} != {'code': 1}
+E         Use -v to get more diff
+
+tools\tests\test_check_03.py:406: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_check_03.py::test_an_absent_region_in_a_region_bearing_document_is_a_finding
+FAILED tools/tests/test_check_03.py::test_a_byte_identical_placeholder_is_a_finding
+FAILED tools/tests/test_check_03.py::test_a_body_under_the_word_floor_is_a_finding
+FAILED tools/tests/test_check_03.py::test_a_body_with_no_scope_vocabulary_is_a_finding
+FAILED tools/tests/test_check_03.py::test_a_body_still_carrying_the_skeletons_marker_is_a_finding
+FAILED tools/tests/test_check_03.py::test_the_committed_fixture_fails_and_names_every_condition
+FAILED tools/tests/test_check_03.py::test_the_word_floor_override_is_effective_and_prints
+FAILED tools/tests/test_check_03.py::test_a_waiver_suppresses_one_named_finding
+FAILED tools/tests/test_check_03.py::test_the_anti_rot_pin_holds_for_the_known_bad_fixture
+9 failed, 14 passed in 3.64s
+
+EXIT=1
+
+The exit code above is the pytest process's own, read from $? immediately after
+the redirection.
+
+9 failed, 14 passed. The fourteen passes are the assertions a check with its
+detection stubbed out satisfies HONESTLY, and they are what make the nine
+failures readable as a DISCRIMINATION result rather than as a module that does
+not work:
+
+  a README carrying no region of any kind is DID-NOT-RUN, not a finding
+  an absent README is DID-NOT-RUN, with a refusal naming the repair
+  BOTH real limitations headings pass over the same anchor
+  a filled-in paragraph passes
+  the fixture's limits body hashes to the constant the skeleton plan recorded
+  this module's copy of that constant equals that plan's copy
+  the LIVE skeleton still hashes to that same constant
+  the scope vocabulary is the same ten terms that plan asserted
+  the fixture is named `broken-` and is never enumerated as an artifact
+  the fixture's ONLY defect is its limits paragraph: CHECK-01 passes over it
+  the population floor override prints and demotes
+  the committed expectation holds no wording-bearing field
+  the module satisfies the check protocol and discovery finds it
+  the two floors are different numbers with different jobs
+
+The third and fourth of those are the ones a heading-keyed check could not
+satisfy: whichever heading literal it keyed on, one of the two real artifacts
+would fail. The tenth is what stops the fixture from proving less than it looks
+like it proves.

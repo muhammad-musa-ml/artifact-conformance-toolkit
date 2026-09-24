@@ -1,0 +1,382 @@
+CHECK-05 -- THE RED TRANSCRIPT
+===========================================
+
+WHAT CHECK-05 REQUIRES, verbatim from the project requirements document:
+
+    Fails on a missing register row, reported as `expected N, found M`
+
+THE SHORTCUT THAT WORDING INVITES, AND WHY THIS CHECK REFUSES IT
+------------------------------------------------------------------
+"reported as `expected N, found M`" reads like two numbers to PRINT, and the
+shortest way to print two numbers is to read them off the document you are
+checking. `tools/build_register.py` writes its own summary line into every
+register it generates:
+
+    - expected 12, found 12
+
+A check that lifted those numbers would agree with the register about the
+register. It would report a clean run over a document that carries eleven rows
+while claiming twelve, and it would do so with both numbers present and both
+numbers wrong -- the count-present-but-wrong failure, which reads as detail
+where a missing count would have read as a question.
+
+So this check COUNTS THE ROWS. The committed fixture is built to make that the
+difference between a pass and a finding: its summary line deliberately claims
+the full count while its body carries one row fewer, and
+test_the_check_counts_rows_rather_than_believing_the_documents_own_summary is
+the assertion. That test is one of the eight below.
+
+A SET COMPARISON, NOT A COUNT COMPARISON
+------------------------------------------
+The second reason a count is not enough: a register carrying the right NUMBER of
+rows with the WRONG SLUG in one of them is a document a reader would be actively
+misled by, and a count comparison reports it clean. The comparison here is over
+the slug SETS, and `test_an_extra_row_for_an_unexpected_slug_is_a_finding`
+constructs exactly that state -- twelve rows, twelve expected, one of them wrong
+-- and asserts both halves fire.
+
+THE EXPECTED NUMBER IS READ, NEVER TYPED, AND THAT IS ASSERTED BOTH WAYS
+--------------------------------------------------------------------------
+`counts.register_rows_expected` is read from tools/manifest.json at run time.
+That manifest already holds a committed literal asserted against its own
+derivation (the slugs carrying `register_row: true`), so the manifest is the
+tripwire. A second copy of the number inside check_05.py would be a third value
+that can drift from both, and the drift would be invisible -- a checker agreeing
+with itself.
+
+Asserted positively by test_the_expected_count_equals_the_manifests_committed_
+literal, which reads the manifest AT TEST TIME so a manifest edit moves both ends
+of the assertion together. Asserted negatively by test_the_expected_count_is_not_
+typed_into_the_check_source, because a positive assertion alone is satisfied by a
+hard-coded constant that happens to agree today. Both were already passing when
+this was captured -- they are properties of the module, not of its verdict.
+
+WHAT MAKES THIS A REAL RED RATHER THAN A MISSING FILE
+------------------------------------------------------
+a design rule requires the transcript to be captured BEFORE the implementation commit,
+with commit order as the evidence. The trap in that requirement is that "before
+the implementation" reads as "before any code exists", and a transcript captured
+then records a module that could not be loaded or an input that was not there.
+Each of those exits non-zero, each satisfies a naive "non-zero exit" acceptance
+test, and none of them says anything about whether the check DISCRIMINATES.
+
+So tools/checks/check_05.py was REGISTERED AND RUNNABLE when this was captured.
+Discovery found it. It read the manifest, read the committed literal, derived the
+expected set, resolved the artifacts root, located the register at that root,
+parsed its rows, probed all fourteen slug directories for the `status` rules,
+counted the excluded slugs with their reasons and wrote a structured report. ONE
+function was stubbed:
+
+    register_findings()   returns no finding, whatever it is handed
+
+READ THE QUOTED POPULATION LINE IN THE FIRST FAILURE. It says
+
+    CHECK-05  PASS  found=0 checked=12 of 14 skipped=2 floor=1 waived=0
+    expected 12, found 11 | built 2 of 14, pending 12, rows 11 of 12 |
+    excluded: 2 (reasons recorded) | artifacts-root=... slugs-probed=14
+
+The check MEASURED twelve expected rows and ELEVEN found. It printed the
+shortfall, in the requirement's own words, on the same line as the verdict. And
+it printed PASS. That is precisely the shape a false RED cannot demonstrate: the
+inputs were real, the measurement happened, the numbers are right, and only the
+verdict is wrong.
+
+A FALSE RED FIRED DURING THIS CAPTURE AND IS RECORDED HERE RATHER THAN QUIETLY
+REPAIRED
+-------------------------------------------------------------------------------
+The first capture of this run held NINE failures, not eight. The ninth was
+test_every_file_in_the_fixture_is_tracked, and it failed with
+
+    5 fixture file(s) are present but UNTRACKED
+
+which is a statement about an input that was not there yet, not a verdict. The
+fixture had been written to disk but not staged, and `git ls-files` reads the
+INDEX. Its failure would have been repaired by the act of committing rather than
+by implementing anything, which is the definition of a false RED.
+
+The repair was to stage the fixture before re-capturing -- the same repair plan
+an earlier plan made when its anti-rot pin read an expectation file that did not exist yet.
+The committed fixture and its expectation are statements of the INTENDED verdict,
+so they belong in the RED commit, and with them in the index that test passes
+HONESTLY. The capture below is the re-run. Eight failures, all verdicts.
+
+The needle set that detects a false RED is DELIBERATELY NOT PASTED HERE. A
+transcript that quoted its own needles would match that sweep against its own
+prose and fail the gate it exists to satisfy, and the natural repair for that --
+excluding this file from the sweep -- would put a hole exactly where the guard is
+supposed to be. The pattern lives in the plan's acceptance criteria. It returned
+0 against the raw pytest output below, before that output was framed, and 0
+against this file.
+
+THE POPULATION THIS RUN COVERED, STATED RATHER THAN ASSUMED
+-------------------------------------------------------------
+Twenty-five tests COLLECTED. Twelve expected register rows, fourteen slugs
+probed, two excluded with their reasons printed. Those are the numbers in the
+population line above and they are the numbers in the manifest; a pass over a
+population nobody confirmed has verified nothing.
+
+CAPTURED
+--------
+  command      .venv/Scripts/python.exe -m pytest tools/tests/test_check_05.py -q
+  cwd          the agent worktree root
+  interpreter  CPython 3.12.11, pytest 9.1.1
+  parent HEAD  0d628de100e5b12025a5aa4cfb28eaccd5afdbc8
+  redirection  > .reports/p0111-RED-check05.txt 2>&1   (never a pipe: a command
+               piped into another process returns the PIPE's exit status, not
+               the command's)
+
+VERBATIM OUTPUT
+---------------
+..FFF......FF..FF..F.....                                                [100%]
+================================== FAILURES ===================================
+_______________ test_a_missing_row_is_a_finding_naming_the_slug _______________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_a_missing_row_is_a_findin0')
+
+    def test_a_missing_row_is_a_finding_naming_the_slug(tmp_path):
+        rows = [slug for slug in expected_slugs() if slug != OMITTED_SLUG]
+        root = make_artifacts_root(tmp_path, slugs=rows)
+        result = run_check(root / built_slugs()[0], report=tmp_path / "missing.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expected 12, found 11 | built 2 of 14, pending 12, rows 11 of 12 | excluded: 2 (reasons recorded) | artifacts-root=/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_a_missing_row_is_a_findin0/artifacts slugs-probed=14
+E           excluded             alpha-substrate: Program factoring, not a canon example project: it backs no canon bullet. The slug returns zero bullet-scoped hits in BOTH canons and has no build_paths entry in either.
+E           excluded             example-search-benchmark: Cited by no bullet in either canon. Verified with a BULLET-SCOPED probe: the document-scoped scan of example-beta returns 1 hit, at $.consistency_notes[13], whose text says this artifact is 'cited nowhere here' -- the canon affirming the exclusion, not contradicting it.
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout="CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expec..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-y9ycxst1')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_05.py:191: AssertionError
+_ test_the_check_counts_rows_rather_than_believing_the_documents_own_summary __
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_the_check_counts_rows_rat0')
+
+    def test_the_check_counts_rows_rather_than_believing_the_documents_own_summary(tmp_path):
+        """The shortcut the requirement's own wording invites.
+    
+        `expected N, found M` reads like two numbers to print, and the shortest way
+        to print them is to read them off the document. This register CLAIMS the
+        full count in its own summary line while carrying one row fewer.
+        """
+        literal = live_manifest()["counts"]["register_rows_expected"]
+        rows = [slug for slug in expected_slugs() if slug != OMITTED_SLUG]
+        root = make_artifacts_root(tmp_path, slugs=rows, summary_expected=literal,
+                                   summary_found=literal)
+        register = (root / check_05.REGISTER_NAME).read_text(encoding="ascii")
+        assert "found %d" % literal in register, (
+            "the fixture register no longer lies about its own row count, so this "
+            "test asserts nothing")
+        result = run_check(root / built_slugs()[0], report=tmp_path / "liar.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expected 12, found 11 | built 2 of 14, pending 12, rows 11 of 12 | excluded: 2 (reasons recorded) | artifacts-root=/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_the_check_counts_rows_rat0/artifacts slugs-probed=14
+E           excluded             alpha-substrate: Program factoring, not a canon example project: it backs no canon bullet. The slug returns zero bullet-scoped hits in BOTH canons and has no build_paths entry in either.
+E           excluded             example-search-benchmark: Cited by no bullet in either canon. Verified with a BULLET-SCOPED probe: the document-scoped scan of example-beta returns 1 hit, at $.consistency_notes[13], whose text says this artifact is 'cited nowhere here' -- the canon affirming the exclusion, not contradicting it.
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout="CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expec..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-goz1_ft_')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_05.py:213: AssertionError
+____________ test_an_extra_row_for_an_unexpected_slug_is_a_finding ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_an_extra_row_for_an_unexp0')
+
+    def test_an_extra_row_for_an_unexpected_slug_is_a_finding(tmp_path):
+        """Without this the set comparison collapses back into a count comparison."""
+        rows = [slug for slug in expected_slugs() if slug != OMITTED_SLUG]
+        rows.append("not-a-manifest-slug")
+        root = make_artifacts_root(tmp_path, slugs=sorted(rows))
+        result = run_check(root / built_slugs()[0], report=tmp_path / "extra.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expected 12, found 12 | built 2 of 14, pending 12, rows 12 of 12 | excluded: 2 (reasons recorded) | artifacts-root=/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_an_extra_row_for_an_unexp0/artifacts slugs-probed=14
+E           excluded             alpha-substrate: Program factoring, not a canon example project: it backs no canon bullet. The slug returns zero bullet-scoped hits in BOTH canons and has no build_paths entry in either.
+E           excluded             example-search-benchmark: Cited by no bullet in either canon. Verified with a BULLET-SCOPED probe: the document-scoped scan of example-beta returns 1 hit, at $.consistency_notes[13], whose text says this artifact is 'cited nowhere here' -- the canon affirming the exclusion, not contradicting it.
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout="CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expec..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-xie42_gh')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_05.py:225: AssertionError
+___________ test_a_pending_slug_whose_directory_exists_is_a_finding ___________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_a_pending_slug_whose_dire0')
+
+    def test_a_pending_slug_whose_directory_exists_is_a_finding(tmp_path):
+        """the status rule, rule one: something was built and the expected set was not told."""
+        manifest = live_manifest()
+        pending = sorted(s["slug"] for s in manifest["slugs"]
+                         if s.get("status") == check_05.STATUS_PENDING)
+        assert pending, "the live manifest has no pending slug"
+        stale = pending[0]
+        root = make_artifacts_root(tmp_path,
+                                   present_dirs=built_slugs() + [stale])
+        result = run_check(root / built_slugs()[0], report=tmp_path / "stale.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expected 12, found 12 | built 2 of 14, pending 12, rows 12 of 12 | excluded: 2 (reasons recorded) | artifacts-root=/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_a_pending_slug_whose_dire0/artifacts slugs-probed=14
+E           excluded             alpha-substrate: Program factoring, not a canon example project: it backs no canon bullet. The slug returns zero bullet-scoped hits in BOTH canons and has no build_paths entry in either.
+E           excluded             example-search-benchmark: Cited by no bullet in either canon. Verified with a BULLET-SCOPED probe: the document-scoped scan of example-beta returns 1 hit, at $.consistency_notes[13], whose text says this artifact is 'cited nowhere here' -- the canon affirming the exclusion, not contradicting it.
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout="CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expec..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-l26jbxmf')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_05.py:334: AssertionError
+__________ test_a_built_slug_whose_directory_is_missing_is_a_finding __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_a_built_slug_whose_direct0')
+
+    def test_a_built_slug_whose_directory_is_missing_is_a_finding(tmp_path):
+        """the status rule, rule two: the manifest claims a build that is not on disk."""
+        built = built_slugs()
+        root = make_artifacts_root(tmp_path, present_dirs=built[1:])
+        result = run_check(root / "anything", report=tmp_path / "unbuilt.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expected 12, found 12 | built 2 of 14, pending 12, rows 12 of 12 | excluded: 2 (reasons recorded) | artifacts-root=/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_a_built_slug_whose_direct0/artifacts slugs-probed=14
+E           excluded             alpha-substrate: Program factoring, not a canon example project: it backs no canon bullet. The slug returns zero bullet-scoped hits in BOTH canons and has no build_paths entry in either.
+E           excluded             example-search-benchmark: Cited by no bullet in either canon. Verified with a BULLET-SCOPED probe: the document-scoped scan of example-beta returns 1 hit, at $.consistency_notes[13], whose text says this artifact is 'cited nowhere here' -- the canon affirming the exclusion, not contradicting it.
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout="CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expec..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-lue12itu')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_05.py:344: AssertionError
+__ test_a_manifest_whose_literal_disagrees_with_its_derivation_is_a_finding ___
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_a_manifest_whose_literal_0')
+
+    def test_a_manifest_whose_literal_disagrees_with_its_derivation_is_a_finding(tmp_path):
+        """THAT disagreement is the finding, never a value to pick between."""
+        manifest = live_manifest()
+        manifest["counts"]["register_rows_expected"] += 1
+        path = write_manifest(tmp_path, manifest)
+        root = make_artifacts_root(tmp_path, manifest=manifest)
+        result = run_check(root / built_slugs()[0], "--manifest", path,
+                           report=tmp_path / "drift.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expected 12, found 12 | built 2 of 14, pending 12, rows 12 of 12 | excluded: 2 (reasons recorded) | artifacts-root=/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_a_manifest_whose_literal_0/artifacts slugs-probed=14
+E           excluded             alpha-substrate: Program factoring, not a canon example project: it backs no canon bullet. The slug returns zero bullet-scoped hits in BOTH canons and has no build_paths entry in either.
+E           excluded             example-search-benchmark: Cited by no bullet in either canon. Verified with a BULLET-SCOPED probe: the document-scoped scan of example-beta returns 1 hit, at $.consistency_notes[13], whose text says this artifact is 'cited nowhere here' -- the canon affirming the exclusion, not contradicting it.
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout="CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expec..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-u7ujrclv')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_05.py:400: AssertionError
+__________ test_the_committed_fixture_fails_with_exactly_one_finding __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_the_committed_fixture_fai0')
+
+    def test_the_committed_fixture_fails_with_exactly_one_finding(tmp_path):
+        fixture = conftest.broken_fixture(FIXTURE)
+        result = run_check(fixture / built_slugs()[0], report=tmp_path / "fix.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expected 12, found 11 | built 2 of 14, pending 12, rows 11 of 12 | excluded: 2 (reasons recorded) | artifacts-root=/path/to/toolkit/agent-worktrees/worktrees/agent-a195197c8c413b807/fixtures/broken-artifacts/broken-missing-register-row slugs-probed=14
+E           excluded             alpha-substrate: Program factoring, not a canon example project: it backs no canon bullet. The slug returns zero bullet-scoped hits in BOTH canons and has no build_paths entry in either.
+E           excluded             example-search-benchmark: Cited by no bullet in either canon. Verified with a BULLET-SCOPED probe: the document-scoped scan of example-beta returns 1 hit, at $.consistency_notes[13], whose text says this artifact is 'cited nowhere here' -- the canon affirming the exclusion, not contradicting it.
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout="CHECK-05         PASS        found=0 checked=12 of 14 skipped=2 floor=1 waived=0  expec..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-6tl9rum2')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_05.py:413: AssertionError
+____________ test_the_anti_rot_pin_holds_for_the_known_bad_fixture ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5888/test_the_anti_rot_pin_holds_fo0')
+
+    def test_the_anti_rot_pin_holds_for_the_known_bad_fixture(tmp_path):
+        fixture = conftest.broken_fixture(FIXTURE)
+        expectation_path = fixture / EXPECTATION_FILE
+        assert expectation_path.is_file(), (
+            "%s carries no %s, so its RED evidence has nothing pinning it"
+            % (FIXTURE, EXPECTATION_FILE))
+        expected = json.loads(expectation_path.read_text(encoding="ascii"))
+    
+        result = run_check(fixture / built_slugs()[0], report=tmp_path / "pin.json")
+        assert result.report is not None, "the check wrote no structured report"
+        missing = [field for field in PINNED_FIELDS if field not in result.report]
+        assert not missing, (
+            "the live report no longer carries %r. A renamed field would otherwise "
+            "make this pin compare nothing." % missing)
+        measured = {field: result.report[field] for field in PINNED_FIELDS}
+>       assert measured == expected, (
+            "the structured report drifted from its committed expectation.\n"
+            "  expected: %r\n  measured: %r" % (expected, measured))
+E       AssertionError: the structured report drifted from its committed expectation.
+E           expected: {'check_id': 'CHECK-05', 'checked': 12, 'code': 1, 'finding_ids': ['register:missing-row:alpha-artifact-3'], 'found': 1, 'schema_version': 'canonkit/1'}
+E           measured: {'check_id': 'CHECK-05', 'code': 0, 'found': 0, 'checked': 12, 'finding_ids': [], 'schema_version': 'canonkit/1'}
+E       assert {'check_id': ...ked': 12, ...} == {'check_id': ...nomics'], ...}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Differing items:
+E         {'finding_ids': []} != {'finding_ids': ['register:missing-row:alpha-artifact-3']}
+E         {'code': 0} != {'code': 1}
+E         {'found': 0} != {'found': 1}
+E         Use -v to get more diff
+
+tools\tests\test_check_05.py:467: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_check_05.py::test_a_missing_row_is_a_finding_naming_the_slug
+FAILED tools/tests/test_check_05.py::test_the_check_counts_rows_rather_than_believing_the_documents_own_summary
+FAILED tools/tests/test_check_05.py::test_an_extra_row_for_an_unexpected_slug_is_a_finding
+FAILED tools/tests/test_check_05.py::test_a_pending_slug_whose_directory_exists_is_a_finding
+FAILED tools/tests/test_check_05.py::test_a_built_slug_whose_directory_is_missing_is_a_finding
+FAILED tools/tests/test_check_05.py::test_a_manifest_whose_literal_disagrees_with_its_derivation_is_a_finding
+FAILED tools/tests/test_check_05.py::test_the_committed_fixture_fails_with_exactly_one_finding
+FAILED tools/tests/test_check_05.py::test_the_anti_rot_pin_holds_for_the_known_bad_fixture
+8 failed, 17 passed in 6.04s
+
+EXIT=1
+
+The exit code above is the pytest process's own, read from $? immediately after
+the redirection.
+
+8 failed, 17 passed, 25 collected. The seventeen passes are the assertions a
+check with its detection stubbed out satisfies HONESTLY, and they are what make
+the eight failures readable as a DISCRIMINATION result rather than as a module
+that does not work:
+
+  the expected count equals the manifest's committed literal, read at test time
+  that literal appears on no line of check_05.py -- the negative half
+  a complete register passes
+  an expected set of zero is DID-NOT-RUN, not a pass
+  --min-population 0 cannot buy a pass over a population of nothing
+  an absent register is DID-NOT-RUN, with a refusal on stderr
+  an absent manifest is DID-NOT-RUN
+  the excluded count and both no_row_reason strings appear in the output
+  `pending` reaching zero prints a project requirement's closeout criterion
+  the check never writes the status field, and carries no JSON write at all
+  the register is found at the artifacts root's OWN root, not under a slug
+  every file in the fixture is tracked
+  the committed expectation holds no wording-bearing field
+  the module satisfies the check protocol
+  discovery finds it with no protocol violation
+  the floor override prints and demotes
+  the summary prints built N of 14, pending M and the row counts
+
+THE EIGHT FAILURES, and what each one proves cannot be reached without the
+detection:
+
+  a missing row is a finding naming the slug         -- the requirement itself
+  the check counts rows rather than believing the
+    document's own summary line                      -- the shortcut refused
+  an extra row for an unexpected slug is a finding   -- set, not count
+  a pending slug whose directory EXISTS is a finding -- the status rule, rule one
+  a built slug whose directory is MISSING is a
+    finding                                          -- the status rule, rule two
+  a manifest whose literal disagrees with its own
+    derivation is a finding                          -- a design rule, from both ends
+  the committed fixture fails with exactly ONE
+    finding                                          -- the fixture discriminates
+  the anti-rot pin holds for that fixture            -- a design rule's second half
+
+The fourth and fifth are the anti-silencer rules that keep `status` from becoming
+a field an agent could set to make a check stop looking. The seventh is the one
+that stops the fixture from proving less than it looks like it proves: if it
+failed several checks at once, "CHECK-05 refused it" could not say which one did
+the refusing.
+
+Note what is NOT in this list. `pending reaching 0 prints the closeout criterion`
+is the status rule's third rule and it PASSES in the stubbed build, because printing a
+milestone is a reporting property rather than a verdict. It is asserted anyway,
+in the same test module, so the rule is covered even though it could never have
+appeared here.

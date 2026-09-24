@@ -1,0 +1,55 @@
+MIT License
+
+Copyright (c) <year> <copyright holder>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+-------------------------------------------------------------------------------
+SCOPE: WHAT THIS LICENCE COVERS, AND WHAT IT DOES NOT
+-------------------------------------------------------------------------------
+
+THIS LICENCE COVERS THE CODE IN THIS REPOSITORY ONLY.
+
+It covers the scripts, the tooling, the configuration and the prose written for
+this artifact. It grants nothing whatsoever over any third-party material this
+artifact reads, measures, or was derived from.
+
+DERIVED CORPORA ARE NEVER REDISTRIBUTED.
+
+No dataset, corpus, document collection, extract, index, embedding set, or model
+weight derived from a third-party source is distributed under this licence, and
+none is committed to this repository. What this artifact ships instead is the
+means to rebuild the set: the extraction script, the frozen id lists naming
+exactly which records were used, and the recorded fetch date. A reader who wants
+the data obtains it from the original source, under that source's terms.
+
+EACH DATA SOURCE'S OWN ATTRIBUTION AND LICENCE GOVERNS ITS MATERIAL.
+
+Where this artifact measures third-party material, the source is named in the
+README's data section together with its URL, its licence, and the date it was
+fetched, and the source's own attribution block is carried with it. Those terms
+are not superseded by this file and nothing here relaxes them. Where a source's
+licence and this one appear to conflict over the source's material, the source's
+licence governs.
+
+MODEL WEIGHTS AND CONTAINER IMAGES ARE NOT REDISTRIBUTED EITHER.
+
+They are referenced by digest so that a reader can pull the identical bytes from
+the original registry. The reference is not a sublicence, and each remains
+subject to its own terms.

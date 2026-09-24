@@ -1,0 +1,17 @@
+{
+  "company": "A Studio",
+  "dates": "Month YYYY - Month YYYY",
+  "detail": {
+    "done": "Synthetic stand-in. Nothing here describes real work.",
+    "how": "Synthetic stand-in. Nothing here describes a real approach.",
+    "metrics": [
+      "P1-B3: a figure whose row still carries its disclosure [BACKING: designed, not yet measured -- P1 has no reproducing artifact yet]",
+      "P1-B4: a figure whose disclosure was removed without any record saying a measurement happened",
+      "P2-B1: a figure belonging to a slug the expected set still marks pending [BACKING: designed, not yet measured -- P2 has no reproducing artifact yet]"
+    ]
+  },
+  "display_name": "Synthetic ML engagement",
+  "kind": "experience",
+  "role": "Example Role One",
+  "slug": "example-alpha"
+}

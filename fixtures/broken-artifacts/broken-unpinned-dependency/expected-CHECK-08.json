@@ -1,0 +1,10 @@
+{
+  "check_id": "CHECK-08",
+  "checked": 1,
+  "code": 1,
+  "finding_ids": [
+    "pins:unpinned-specifier:requirements.txt:1"
+  ],
+  "found": 1,
+  "schema_version": "canonkit/1"
+}

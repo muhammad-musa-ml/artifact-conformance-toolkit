@@ -1,0 +1,174 @@
+#!/bin/sh
+# artifact-conformance-toolkit pre-push gate -- a design rule, an owner decision.
+#
+# Refuses a push whose test suite does not pass. This is the ONLY merge gate this
+# program has.
+#
+# ACTIVATION (run ONCE per clone):
+#     git config core.hooksPath .githooks
+# core.hooksPath requires Git >= 2.9. The hook is tracked and versioned rather
+# than copied into .git/hooks, which is neither shared nor reviewable. Its own
+# `.githooks/pre-push text eol=lf` line in .gitattributes keeps this shebang LF,
+# so it survives on macOS/Linux regardless of a committer's core.autocrlf.
+#
+# ------------------------------------------------------------------------------
+# THIS HOOK FAILS CLOSED, AND THAT INVERTS THE ANALOG IT IS COPIED FROM.
+#
+# the-upstream-project/.githooks/pre-commit ends its no-interpreter branch with
+# `exit 0` -- it ALLOWS the commit and diagnoses on stderr -- because that
+# project has CI as the authoritative backstop, so a missing local Python must
+# never self-brick the maintainer's commits.
+#
+# There is no backstop here. a project requirement disqualifies hosted runners, and an owner decision chose this
+# local hook AS the gate rather than as a convenience in front of one. A
+# fail-open hook in that position makes a design rule silently optional: the push is
+# allowed, the diagnostic scrolls past, and the gate reports nothing while
+# appearing to be installed. So every branch below that cannot establish a verdict
+# exits NON-ZERO.
+# ------------------------------------------------------------------------------
+#
+# TWO PAYLOADS (a design rule, upgraded by an earlier plan at the END of an earlier round):
+#
+#   1. the test suite
+#   2. conformance.py --self -- this repository checked over the NAMED subset
+#
+# The second one landed here LAST, and the delay was the design rather than an
+# oversight. a design rule chose test-suite-only initially to avoid the bootstrap problem
+# of gating every push on a self-check that was still being built; it stated the
+# upgrade path in the same breath so it would not be lost. Both payloads now run
+# on every push and a failure in EITHER refuses.
+#
+# WHY --self AND NOT `conformance.py .`: this repository is not an artifact. Most
+# of the eleven checks are inapplicable here by construction, and a run that
+# silently checked whichever of them found something to read would report a
+# verdict over a population nobody stated. `--self` declares its subset, prints
+# every checker it did not run WITH a reason and a count, and refuses with exit 2
+# when the subset resolves to zero members.
+#
+# AN EARLIER ROUND REUSES THIS SKELETON. an owner decision chose a local pre-push hook as the merge gate
+# for `alpha-artifact-1`, and the reason a design rule wanted a WORKING hook here rather than a
+# placeholder is that an earlier round should spend its proof effort on the judge and the
+# agreement statistics, not on rediscovering the interpreter probe, the
+# fail-closed branch and the redirect-never-pipe rule. Copy this file, change the
+# two payload lines, keep everything else.
+#
+# Output is REDIRECTED to a file and then read, never piped. A command piped into
+# `tail`/`head` returns the PIPE's exit status, not the real one, which is a
+# recorded platform trap for this machine. Each payload gets its OWN capture file
+# and its OWN `$?` read on the line immediately after it runs -- `$?` is clobbered
+# by the next command, so a single shared status variable would report the second
+# payload's verdict for both.
+
+set -u
+
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || repo_root=""
+if [ -z "$repo_root" ]; then
+  echo "pre-push: not inside a git work tree. Push REFUSED." >&2
+  exit 1
+fi
+cd "$repo_root" || {
+  echo "pre-push: cannot cd to $repo_root. Push REFUSED." >&2
+  exit 1
+}
+
+out=$(mktemp 2>/dev/null) || out=""
+selfout=$(mktemp 2>/dev/null) || selfout=""
+if [ -z "$out" ] || [ -z "$selfout" ]; then
+  echo "pre-push: mktemp produced no temp file, so a payload's output could not" >&2
+  echo "  be captured and its verdict cannot be read. Push REFUSED." >&2
+  rm -f "$out" "$selfout"
+  exit 1
+fi
+
+# Interpreter candidates, most specific first.
+#
+# The repository's own hash-pinned environment comes FIRST, deliberately. a design rule
+# requires the suite to run from a `--require-hashes` install, and on this
+# machine that environment can only be a venv: `uv pip install --system` against
+# the system-wide C:\Python313 fails with "Access is denied (os error 5)". A hook
+# that silently fell through to some other interpreter would be gating on a
+# DIFFERENT dependency set than the one the lock pins.
+candidates=".venv/Scripts/python.exe .venv/bin/python python3 python"
+
+PY=""
+for py in $candidates; do
+  # A candidate containing a slash is a PATH; test the file itself. A bare name
+  # is resolved on PATH.
+  case "$py" in
+    */*) [ -x "$py" ] || continue ;;
+    *)   command -v "$py" >/dev/null 2>&1 || continue ;;
+  esac
+
+  # THE LOAD-BEARING PROBE. Being findable is not being usable: on Windows
+  # `command -v python3` finds the Microsoft Store App-execution alias, a
+  # non-functional stub that prints an install prompt and exits non-zero. A
+  # name-only check selects that broken interpreter and the gate then fails for a
+  # reason having nothing to do with the code. Make the candidate ANSWER.
+  "$py" --version >/dev/null 2>&1 || continue
+
+  PY="$py"
+  break
+done
+
+# Everything between the two FAIL-CLOSED-BRANCH markers below is the
+# no-interpreter branch, and it must exit NON-ZERO. The markers exist so
+# test_pre_push_hook_is_fail_closed can assert on that exact block rather than
+# pattern-matching prose, and so that a future edit which restores the analog's
+# permissive behaviour fails a test instead of passing review.
+#
+# KEEP EXPLANATORY PROSE OUTSIDE THE MARKERS. The first version of this file put
+# this paragraph inside them, and because the paragraph NAMED the very token the
+# test forbids, the guard fired against its own documentation. The test now
+# strips comment lines before asserting, so the block is judged on live code
+# only -- but a comment inside the markers is still noise in a region that exists
+# to be machine-read.
+# FAIL-CLOSED-BRANCH: begin
+if [ -z "$PY" ]; then
+  echo "pre-push: no working Python interpreter found. Push REFUSED." >&2
+  echo "  Probed, in order: $candidates" >&2
+  echo "  Each candidate had to ANSWER \`--version\`, not merely be findable." >&2
+  echo "  To create the environment this repository expects:" >&2
+  echo "      uv venv --python 3.12" >&2
+  echo "      uv pip install --require-hashes -r requirements.txt" >&2
+  echo "  This hook fails CLOSED: there is no CI backstop, so an" >&2
+  echo "  unrunnable gate must refuse rather than wave the push through." >&2
+  rm -f "$out" "$selfout"
+  exit 1
+fi
+# FAIL-CLOSED-BRANCH: end
+
+# -- payload 1: the test suite -------------------------------------------------
+"$PY" -m pytest tools/tests -q > "$out" 2>&1
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  echo "pre-push: test suite FAILED (exit $status). Push REFUSED." >&2
+  echo "  interpreter: $PY" >&2
+  echo "  command:     $PY -m pytest tools/tests -q" >&2
+  echo "--- captured suite output ---" >&2
+  cat "$out" >&2
+  echo "--- end captured suite output ---" >&2
+  rm -f "$out" "$selfout"
+  exit "$status"
+fi
+
+# -- payload 2: the self-check (a design rule, a design rule's stated upgrade) -------------------
+"$PY" tools/conformance.py --self > "$selfout" 2>&1
+selfstatus=$?
+
+if [ "$selfstatus" -ne 0 ]; then
+  echo "pre-push: conformance.py --self FAILED (exit $selfstatus). Push REFUSED." >&2
+  echo "  interpreter: $PY" >&2
+  echo "  command:     $PY tools/conformance.py --self" >&2
+  echo "  Read the captured output below: every checker --self did not run is" >&2
+  echo "  named there WITH its reason, so a refusal can be told apart from a" >&2
+  echo "  subset that quietly resolved to nothing." >&2
+  echo "--- captured self-check output ---" >&2
+  cat "$selfout" >&2
+  echo "--- end captured self-check output ---" >&2
+  rm -f "$out" "$selfout"
+  exit "$selfstatus"
+fi
+
+rm -f "$out" "$selfout"
+exit 0

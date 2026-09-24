@@ -1,0 +1,55 @@
+# build artifacts and measurement outputs live under <home>/Research/<artifact-slug>/, never here
+results/
+
+# ONE scoped exception to the rule above, and only one. a design rule requires
+# fixtures/broken-artifacts/ to be a COMMITTED tree of deliberately broken
+# mini-artifacts; earlier plans commit .../results/figures.json inside it
+# and an earlier plan's audit asserts that tree's committed count. Verified first-hand
+# before this line existed: `git check-ignore -v
+# fixtures/broken-artifacts/broken-unpinned-dependency/results/probe.json`
+# resolved to `.gitignore:2:results/`, so those fixtures were silently never
+# committable and the audit would have counted a population that excluded them.
+#
+# The files admitted here are deliberately-broken INPUTS to a checker, not
+# measurement outputs, which is the whole reason the rule above exists. Every
+# other `results/` path anywhere in this repository stays ignored --
+# test_fixture_results_are_committable asserts BOTH directions, because a
+# negation that admitted everything would satisfy the admission half and defeat
+# the rule.
+#
+# The trailing slash is required, not cosmetic: git will not descend into an
+# excluded DIRECTORY to find a negation for its contents, so the directory itself
+# must be re-included.
+#
+# This does NOT relax a design rule -> a design rule. The fixture tree still sits outside anything
+# conformance.py enumerates, which test_broken_fixture_tree_is_outside_the_scan_root
+# asserts against conftest.SCAN_ROOT (an earlier plan reconciles that constant with
+# tools/manifest.json.
+!fixtures/broken-artifacts/**/results/
+
+_pin/
+*.env
+.env*
+__pycache__/
+*.pyc
+
+# The hash-pinned environment a design rule requires. A venv rather than the host
+# interpreter is NOT a preference: `uv pip install --system` against this
+# machine's C:\Python313 fails with "Access is denied (os error 5)" -- the host
+# install is system-wide and needs elevation, so `.venv/` is the only place the
+# `--require-hashes` install can land without asking for admin rights. It also
+# puts the interpreter on a design rule's stated target (3.12.11) instead of the host's
+# 3.13.5. The lock is tracked; the installed tree is not.
+.venv/
+.DS_Store
+Thumbs.db
+
+# Checker reports are written OUTSIDE the artifact and outside version control
+# (a design rule: the checker must not mutate what it checks). This repository's own
+# report directory follows the same rule -- every verify command earlier
+# redirects into .reports/, and none of that output is evidence anyone should
+# read from git history rather than by re-running the checker.
+.reports/
+
+# the publish script builds export trees here; they are rebuilt from the manifest
+.export/

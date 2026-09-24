@@ -1,0 +1,32 @@
+{
+  "artifact": "broken-unedited-limits",
+  "dated_at": "2026-09-15",
+  "figures": {
+    "median_latency_ms": {
+      "canon_bullet": "example-alpha:P2-B1",
+      "canon_value": 12.0,
+      "derived_from": [
+        "results.json#replay.median"
+      ],
+      "not_shown": "One replay on one laptop. This record exists so the fixture's only defect is its limits paragraph.",
+      "population": 500,
+      "population_label": "replayed requests",
+      "reproduce_criterion": {
+        "kind": "relative",
+        "tolerance": 0.05
+      },
+      "runs": [],
+      "similar": "CONFIRMS",
+      "similar_reason_ref": "register-fragments/broken-unedited-limits.md",
+      "threshold_claim": false,
+      "tier_achieved": "recompute",
+      "unit": "ms",
+      "value": 12.5
+    }
+  },
+  "gate_token": "0000000000000000000000000000000000000000000000000000000000000000",
+  "schema": "canonkit/figures/1",
+  "schema_version": "canonkit/1",
+  "started_at": "2026-09-15T09:00:00+05:00",
+  "started_at_utc": "2026-09-15T04:00:00Z"
+}

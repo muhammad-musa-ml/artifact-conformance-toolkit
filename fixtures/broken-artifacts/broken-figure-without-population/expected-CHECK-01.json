@@ -1,0 +1,10 @@
+{
+  "check_id": "CHECK-01",
+  "checked": 2,
+  "code": 1,
+  "finding_ids": [
+    "figure:cache_hit_ratio"
+  ],
+  "found": 1,
+  "schema_version": "canonkit/1"
+}

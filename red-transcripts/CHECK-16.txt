@@ -1,0 +1,556 @@
+CHECK-16 -- THE RED TRANSCRIPT
+===========================================
+
+WHAT CHECK-16 REQUIRES, from its row in the v1 checker contract:
+
+    Fails when a figure the artifact's own results/retractions.json declares
+    retracted is still being asserted somewhere in the tree. Every hit is
+    CLASSIFIED -- LIVE, FROZEN, FALSE-POSITIVE or UNCLASSIFIED -- because a
+    retraction record quoting the figure it withdrew is the record doing its
+    job and looks identical to a live claim under a grep. A bare-numeric needle
+    adjacent to another digit is a FALSE-POSITIVE, counted and never a finding.
+    The declaration's ABSENCE is exit 2; `retracted: []` with a reviewed_on
+    date is a legal pass over a real population.
+
+WHY THIS CHECKER EXISTS, AND WHY IT EXISTS NOW
+-------------------------------------------------------------------------------
+Its id was RESERVED, not invented: the v2 list carried "CHECK-16:
+Retraction-leak grep -- trigger: the first retraction", with the note that a
+legacy finding was already one "so this may pull into v1". The trigger fired.
+Two figures and one claim were withdrawn from one of this programme's
+artifacts, and a one-off sweep counted where they still appeared across two
+trees: 17 appearances by (file, line, needle), of which ZERO were live, 14 were
+frozen and 3 were false positives.
+
+That sweep closes by saying exactly what it cannot do:
+
+    It is a measurement taken once. Nothing re-runs it. If a retracted figure
+    is typed back into a sentence tomorrow, this file will not notice.
+
+This is what re-runs it.
+
+THE SHORTCUT THE WORDING INVITES, AND WHY THIS CHECK REFUSES IT
+-------------------------------------------------------------------------------
+"a retracted figure that still appears" reads like ONE condition, and a checker
+built on it alone is a grep: read the needles, scan the tree, report the hits.
+That checker is WRONG IN BOTH DIRECTIONS AT ONCE, and the sweep measured both.
+
+Wrong in the direction that fires: a needle of one withdrawn hit rate matched
+`"rps": 6398.8` in a results file -- a throughput reading with nothing to do
+with the figure. The sweep's own conclusion is this check's needle rule, and
+the reason it matters is not tidiness: a checker that fires on a throughput
+number in a results file trains its reader to ignore it, and a checker that is
+routinely ignored is worse than none.
+
+Wrong in the direction that stays silent: a retraction RECORD quotes the figure
+it withdrew, and so does the withdrawn run's own machine record. Those are the
+record doing its job. A checker that called them live would make writing an
+honest retraction impossible, and the repair a reader would reach for --
+deleting the withdrawn run's files -- destroys the evidence of what was
+withdrawn and leaves the retraction pointing at nothing.
+
+So FROZEN and FALSE-POSITIVE are first-class arms with their own tests in both
+directions, and there is no exclusion list: the declaration is scanned like
+every other file, and its own hits classify FROZEN on the ordinary rule because
+a withdrawal date sits beside each of them.
+
+WHAT MAKES THIS A REAL RED
+-------------------------------------------------------------------------------
+The module is REGISTERED and RUNNABLE in this commit. It walks the artifact,
+prunes the directories, opens every text file, counts what it read and what it
+did not, and reports a population through the frozen core's own printer. Only
+the JUDGEMENT is stubbed: it reads no declaration and classifies no hit.
+
+So every failure below is an assertion about a VERDICT. None of a design rule's five
+warning signs appears anywhere in this file -- checked mechanically by the
+script that assembled it, with both needles built from fragments so this header
+cannot satisfy its own check.
+
+TWO DEFECTS THE IMPLEMENTATION HAD, MEASURED BEFORE IT LANDED
+-------------------------------------------------------------------------------
+Recorded here because a transcript that only shows the stub failing hides what
+the GREEN commit actually had to get right, and both were found by running the
+implementation over the committed fixture and reading every hit rather than the
+verdict.
+
+  1. A JSON line `"value": 4.321,` classified FALSE-POSITIVE on its TRAILING
+     COMMA, because the adjacency rule treated any `.` or `,` as part of a
+     longer number. That is the check going blind to a withdrawn figure in a
+     machine record -- the single most likely place for one to survive -- while
+     printing a clean adjudication. A separator now counts only when a DIGIT
+     sits on its far side.
+
+  2. Worse, and the same probe found it: the boundary characters were spelled
+     `""` for "off the end of the line", and `"" in "0123456789"` is True in
+     Python. EVERY match touching a line boundary was FALSE-POSITIVE. A
+     withdrawn figure alone on its own line was invisible.
+
+THE CAPTURED RUN
+-------------------------------------------------------------------------------
+Captured with `python -m pytest tools/tests/test_check_16.py -q > FILE 2>&1`
+and the exit code echoed into the same file immediately afterwards, read from
+$? rather than inferred from the summary line and never through a pipeline
+stage -- a command joined to `tail` reports the pipe's last stage's status, not
+its own.
+
+===============================================================================
+
+FFFFFFFF.FFFFFF.FFFF.FF..                                                [100%]Running teardown with pytest sessionfinish...
+
+================================== FAILURES ===================================
+______ test_an_artifact_with_no_declaration_refuses_rather_than_passing _______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_an_artifact_with_no_decla0')
+
+    def test_an_artifact_with_no_declaration_refuses_rather_than_passing(tmp_path):
+        """The free pass this check exists to refuse.
+    
+        "No retracted figure is asserted here", said over an artifact nobody
+        reviewed, is a sentence rather than a measurement -- and a clean verdict over
+        a tree with no needles is the exact shape a design rule exists to refuse.
+        """
+        root = artifact(tmp_path, declared=None)
+>       assert not (root / "results" / "retractions.json").exists()
+E       AssertionError: assert not True
+E        +  where True = exists()
+E        +    where exists = ((WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_an_artifact_with_no_decla0/retraction-demo') / 'results') / 'retractions.json').exists
+
+tools\tests\test_check_16.py:140: AssertionError
+_______________ test_the_refusal_names_the_file_and_the_repair ________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_the_refusal_names_the_fil0')
+
+    def test_the_refusal_names_the_file_and_the_repair(tmp_path):
+        """A refusal that does not say what would fix it is a dead end."""
+        root = artifact(tmp_path, declared=None)
+        result = run_check(root, report=tmp_path / "none.json")
+        combined = (result.stdout + result.stderr).lower()
+>       assert "results/retractions.json" in combined, combined
+E       AssertionError: check-16         pass        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  stub -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 'results/retractions.json' in 'check-16         pass        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  stub -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0\n'
+
+tools\tests\test_check_16.py:156: AssertionError
+___ test_a_declaration_that_is_not_json_refuses_rather_than_reporting_clean ___
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_a_declaration_that_is_not0')
+
+    def test_a_declaration_that_is_not_json_refuses_rather_than_reporting_clean(
+            tmp_path):
+        """Unreadable is DID-NOT-RUN. A file that could not be parsed declares nothing."""
+        root = artifact(tmp_path, declared=declaration())
+        (root / "results" / "retractions.json").write_text(
+            "{ this is not json", encoding="utf-8", newline="\n")
+        result = run_check(root, report=tmp_path / "bad.json")
+>       assert result.exit_code == core.EXIT_DID_NOT_RUN, result.stdout
+E       AssertionError: CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 0 == 2
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  ST...est-6844/test_a_declaration_that_is_not0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-u22efm1n')).exit_code
+E        +  and   2 = core.EXIT_DID_NOT_RUN
+
+tools\tests\test_check_16.py:168: AssertionError
+______________ test_a_declaration_with_no_retracted_key_refuses _______________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_a_declaration_with_no_ret0')
+
+    def test_a_declaration_with_no_retracted_key_refuses(tmp_path):
+        """An ABSENT key and an EMPTY list are different facts.
+    
+        One says nothing was withdrawn; the other says nobody wrote the key. A check
+        that cannot tell them apart hands out a pass for a file nobody finished.
+        """
+        root = artifact(tmp_path, declared={"reviewed_on": "2026-09-21"})
+        result = run_check(root, report=tmp_path / "nokey.json")
+>       assert result.exit_code == core.EXIT_DID_NOT_RUN, result.stdout
+E       AssertionError: CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 0 == 2
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  ST...est-6844/test_a_declaration_with_no_ret0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-bg9ke4xk')).exit_code
+E        +  and   2 = core.EXIT_DID_NOT_RUN
+
+tools\tests\test_check_16.py:179: AssertionError
+__________________ test_a_live_retracted_figure_is_a_finding __________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_a_live_retracted_figure_i0')
+
+    def test_a_live_retracted_figure_is_a_finding(tmp_path):
+        """The whole point. A withdrawn figure asserted in current prose."""
+        root = artifact(
+            tmp_path,
+            declared=declaration([retraction(needles=[INVENTED_RATIO])]),
+            files={"NOTES.md": "The speed-up we measure is %sx across the sweep.\n"
+                               % INVENTED_RATIO})
+    
+        result = run_check(root, report=tmp_path / "live.json")
+>       assert result.exit_code == core.EXIT_FINDING, (
+            "a withdrawn figure asserted in current prose exited %d:\n%s"
+            % (result.exit_code, result.stdout))
+E       AssertionError: a withdrawn figure asserted in current prose exited 0:
+E         CHECK-16         PASS        found=0 checked=5 of 5 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-16         PASS        found=0 checked=5 of 5 not-examined=0 floor=1 waived=0  ST...est-6844/test_a_live_retracted_figure_i0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-99zjtds2')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_16.py:196: AssertionError
+__________________ test_the_finding_carries_its_line_number ___________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_the_finding_carries_its_l0')
+
+    def test_the_finding_carries_its_line_number(tmp_path):
+        """A finding a reader cannot navigate to is a finding nobody repairs."""
+        root = artifact(
+            tmp_path,
+            declared=declaration([retraction(needles=[INVENTED_RATIO])]),
+            files={"NOTES.md": "first line\nsecond line\nthe ratio is %sx here\n"
+                               % INVENTED_RATIO})
+        result = run_check(root, report=tmp_path / "line.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-16         PASS        found=0 checked=5 of 5 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-16         PASS        found=0 checked=5 of 5 not-examined=0 floor=1 waived=0  ST...est-6844/test_the_finding_carries_its_l0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-rp1i0ruc')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_16.py:214: AssertionError
+_____ test_a_bare_numeric_needle_inside_a_longer_number_is_not_a_finding ______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_a_bare_numeric_needle_ins0')
+
+    def test_a_bare_numeric_needle_inside_a_longer_number_is_not_a_finding(tmp_path):
+        """MEASURED, not imagined: `98.8` matches `"rps": 6398.8`.
+    
+        Reproduced here with invented numbers. If this ever fails, the check has
+        started firing on throughput readings in results files, which is how a
+        checker teaches its reader to ignore it.
+        """
+        root = artifact(
+            tmp_path,
+            declared=declaration([retraction(rid="an-invented-rate",
+                                             needles=[INVENTED_RATE])]),
+            files={"results/throughput.json":
+                   '{\n  "rps": 63%s\n}\n' % INVENTED_RATE})
+    
+        result = run_check(root, report=tmp_path / "fp.json")
+        assert result.exit_code == core.EXIT_PASS, (
+            "the check fired on a throughput number that merely ENDS with the "
+            "needle's digits:\n%s" % result.stdout)
+>       assert result.report["arms"]["FALSE-POSITIVE"] >= 1, (
+            "the hit was not classified FALSE-POSITIVE, so it was not counted at "
+            "all -- an adjudicated hit that vanishes is worse than one that fires: "
+            "%r" % (result.report["arms"],))
+E       AssertionError: the hit was not classified FALSE-POSITIVE, so it was not counted at all -- an adjudicated hit that vanishes is worse than one that fires: {'FALSE-POSITIVE': 0, 'FROZEN': 0, 'LIVE': 0, 'UNCLASSIFIED': 0}
+E       assert 0 >= 1
+
+tools\tests\test_check_16.py:243: AssertionError
+___________ test_the_false_positive_is_counted_rather_than_dropped ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_the_false_positive_is_cou0')
+
+    def test_the_false_positive_is_counted_rather_than_dropped(tmp_path):
+        """A hit that is excluded without being counted is a hit silently dropped."""
+        root = artifact(
+            tmp_path,
+            declared=declaration([retraction(rid="an-invented-rate",
+                                             needles=[INVENTED_RATE])]),
+            files={"results/throughput.json":
+                   '{\n  "rps": 63%s,\n  "p99": 63%s\n}\n'
+                   % (INVENTED_RATE, INVENTED_RATE)})
+        result = run_check(root, report=tmp_path / "fp2.json")
+>       assert result.report["arms"]["FALSE-POSITIVE"] == 2, result.report
+E       AssertionError: {'arms': {'FALSE-POSITIVE': 0, 'FROZEN': 0, 'LIVE': 0, 'UNCLASSIFIED': 0}, 'artifact': '\\home\\user\\AppData\\Loc...st-of-an-account-name\\pytest-6844\\test_the_false_positive_is_cou0\\retraction-demo', 'check_id': 'CHECK-16', 'checked': 5, ...}
+E       assert 0 == 2
+
+tools\tests\test_check_16.py:260: AssertionError
+____ test_a_word_form_needle_without_its_context_terms_is_a_false_positive ____
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_a_word_form_needle_withou0')
+
+    def test_a_word_form_needle_without_its_context_terms_is_a_false_positive(
+            tmp_path):
+        """Ordinary English is not a retracted claim.
+    
+        The sweep found `almost nothing` twice in a sibling benchmark, both times
+        about how many documents a query matches. Reported rather than tuned away,
+        because a false positive you can see is worth more than a needle somebody
+        quietly narrowed.
+        """
+        root = artifact(
+            tmp_path,
+            declared=declaration([retraction(rid="an-invented-claim",
+                                             needles=["almost nothing"],
+                                             context_terms=["cache", "hit rate"])]),
+            files={"NOTES.md": "The filter matches almost nothing on this corpus.\n"})
+        result = run_check(root, report=tmp_path / "word.json")
+        assert result.exit_code == core.EXIT_PASS, result.stdout
+>       assert result.report["arms"]["FALSE-POSITIVE"] == 1, result.report
+E       AssertionError: {'arms': {'FALSE-POSITIVE': 0, 'FROZEN': 0, 'LIVE': 0, 'UNCLASSIFIED': 0}, 'artifact': '\\home\\user\\AppData\\Loc...st-of-an-account-name\\pytest-6844\\test_a_word_form_needle_withou0\\retraction-demo', 'check_id': 'CHECK-16', 'checked': 5, ...}
+E       assert 0 == 1
+
+tools\tests\test_check_16.py:297: AssertionError
+___________ test_a_word_form_needle_WITH_its_context_terms_is_live ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_a_word_form_needle_WITH_i0')
+
+    def test_a_word_form_needle_WITH_its_context_terms_is_live(tmp_path):
+        """The other direction, or the rule above is just a way of never firing."""
+        root = artifact(
+            tmp_path,
+            declared=declaration([retraction(rid="an-invented-claim",
+                                             needles=["almost nothing"],
+                                             context_terms=["cache", "hit rate"])]),
+            files={"NOTES.md": "The cache returns almost nothing on this workload.\n"})
+        result = run_check(root, report=tmp_path / "word2.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-16         PASS        found=0 checked=5 of 5 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-16         PASS        found=0 checked=5 of 5 not-examined=0 floor=1 waived=0  ST...est-6844/test_a_word_form_needle_WITH_i0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-aimd4n_e')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_16.py:309: AssertionError
+_____ test_a_figure_quoted_beside_a_withdrawal_marker_is_frozen_not_live ______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_a_figure_quoted_beside_a_0')
+
+    def test_a_figure_quoted_beside_a_withdrawal_marker_is_frozen_not_live(tmp_path):
+        """A retraction that cannot quote what it withdrew is not a retraction."""
+        root = artifact(
+            tmp_path,
+            declared=declaration([retraction(needles=[INVENTED_RATIO])]),
+            files={"results/RETRACTED.md":
+                   "## Retracted\n\nThe earlier %sx ratio is **withdrawn**: the run "
+                   "that produced it executed no guards.\n" % INVENTED_RATIO})
+        result = run_check(root, report=tmp_path / "frozen.json")
+        assert result.exit_code == core.EXIT_PASS, (
+            "a figure quoted inside its own retraction was called live:\n%s"
+            % result.stdout)
+>       assert result.report["arms"]["FROZEN"] >= 1, result.report
+E       AssertionError: {'arms': {'FALSE-POSITIVE': 0, 'FROZEN': 0, 'LIVE': 0, 'UNCLASSIFIED': 0}, 'artifact': '\\home\\user\\AppData\\Loc...st-of-an-account-name\\pytest-6844\\test_a_figure_quoted_beside_a_0\\retraction-demo', 'check_id': 'CHECK-16', 'checked': 5, ...}
+E       assert 0 >= 1
+
+tools\tests\test_check_16.py:330: AssertionError
+____________ test_the_declaration_is_scanned_like_every_other_file ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_the_declaration_is_scanne0')
+
+    def test_the_declaration_is_scanned_like_every_other_file(tmp_path):
+        """NO FILE IS EXCLUDED BY NAME, and the declaration is the tempting one.
+    
+        Its own hits land in FROZEN on the ordinary rule, because a withdrawal date
+        sits beside each of them -- the correct answer arrived at by the classifier
+        rather than bought with an exemption.
+        """
+        root = artifact(tmp_path,
+                        declared=declaration([retraction(needles=[INVENTED_RATIO])]))
+        result = run_check(root, report=tmp_path / "self.json")
+        assert result.exit_code == core.EXIT_PASS, result.stdout
+        carriers = {hit["file"] for hit in result.report["hits"]}
+>       assert "results/retractions.json" in carriers, (
+            "the declaration was not scanned, so this check has an exclusion list "
+            "after all: %r" % (sorted(carriers),))
+E       AssertionError: the declaration was not scanned, so this check has an exclusion list after all: []
+E       assert 'results/retractions.json' in set()
+
+tools\tests\test_check_16.py:346: AssertionError
+________ test_a_marker_outside_the_radius_does_not_freeze_a_live_line _________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_a_marker_outside_the_radi0')
+
+    def test_a_marker_outside_the_radius_does_not_freeze_a_live_line(tmp_path):
+        """The radius is a real boundary, not decoration.
+    
+        A withdrawal marker two hundred lines away does not make a sentence on line
+        one a record. If it did, one `retracted` anywhere in a long document would
+        freeze the whole file.
+        """
+        body = ("The ratio is %sx.\n" % INVENTED_RATIO) + ("filler\n" * 200) + \
+               "That figure was withdrawn.\n"
+        root = artifact(tmp_path,
+                        declared=declaration([retraction(needles=[INVENTED_RATIO])]),
+                        files={"NOTES.md": body})
+        result = run_check(root, report=tmp_path / "radius.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-16         PASS        found=0 checked=5 of 5 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-16         PASS        found=0 checked=5 of 5 not-examined=0 floor=1 waived=0  ST...est-6844/test_a_marker_outside_the_radi0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-nw4bu1ms')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_16.py:364: AssertionError
+_____ test_the_effective_radius_prints_so_a_widening_cannot_be_invisible ______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_the_effective_radius_prin0')
+
+    def test_the_effective_radius_prints_so_a_widening_cannot_be_invisible(tmp_path):
+        """A cue set adjusted until the count reads zero is measuring the adjuster."""
+        body = ("The ratio is %sx.\n" % INVENTED_RATIO) + ("filler\n" * 30) + \
+               "That figure was withdrawn.\n"
+        root = artifact(tmp_path,
+                        declared=declaration([retraction(needles=[INVENTED_RATIO])]),
+                        files={"NOTES.md": body})
+    
+        tight = run_check(root, report=tmp_path / "tight.json")
+>       assert tight.exit_code == core.EXIT_FINDING, tight.stdout
+E       AssertionError: CHECK-16         PASS        found=0 checked=5 of 5 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-16         PASS        found=0 checked=5 of 5 not-examined=0 floor=1 waived=0  ST...est-6844/test_the_effective_radius_prin0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-bj407j98')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_16.py:377: AssertionError
+_________ test_an_empty_declaration_with_NO_review_date_is_a_finding __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_an_empty_declaration_with1')
+
+    def test_an_empty_declaration_with_NO_review_date_is_a_finding(tmp_path):
+        """The free pass an empty list would otherwise buy.
+    
+        Without a review date, `{"retracted": []}` is indistinguishable from a file
+        nobody read, and the check would hand out a clean verdict for shipping four
+        characters.
+        """
+        root = artifact(tmp_path, declared=declaration([], reviewed_on=None))
+        result = run_check(root, report=tmp_path / "undated.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  ST...est-6844/test_an_empty_declaration_with1'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-tly25e4l')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_16.py:414: AssertionError
+_______________ test_a_retraction_with_no_needles_is_a_finding ________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_a_retraction_with_no_need0')
+
+    def test_a_retraction_with_no_needles_is_a_finding(tmp_path):
+        """An entry nothing hunts is decoration in a list that looks like evidence."""
+        root = artifact(tmp_path,
+                        declared=declaration([retraction(needles=[])]))
+        result = run_check(root, report=tmp_path / "noneedles.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  ST...est-6844/test_a_retraction_with_no_need0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-rhih31kg')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_16.py:424: AssertionError
+________________ test_a_retraction_with_no_reason_is_a_finding ________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_a_retraction_with_no_reas0')
+
+    def test_a_retraction_with_no_reason_is_a_finding(tmp_path):
+        """A retraction with no stated reason cannot be reviewed."""
+        entry = retraction()
+        entry.pop("why")
+        root = artifact(tmp_path, declared=declaration([entry]))
+        result = run_check(root, report=tmp_path / "noreason.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  ST...est-6844/test_a_retraction_with_no_reas0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-9ci3kqdg')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_16.py:435: AssertionError
+______ test_the_population_line_carries_both_counts_and_the_needle_count ______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_the_population_line_carri0')
+
+    def test_the_population_line_carries_both_counts_and_the_needle_count(tmp_path):
+        """Two numbers about two different things, and neither stands in for the other."""
+        root = artifact(tmp_path,
+                        declared=declaration([retraction(needles=[INVENTED_RATIO,
+                                                                  INVENTED_RATE])]))
+        result = run_check(root, report=tmp_path / "pop.json")
+        line = next(row for row in result.stdout.splitlines()
+                    if row.startswith("CHECK-16"))
+        assert "checked=" in line and " of " in line, line
+        assert "not-examined=" in line, line
+>       assert "retractions=1" in line, line
+E       AssertionError: CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E       assert 'retractions=1' in 'CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=1 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0'
+
+tools\tests\test_check_16.py:455: AssertionError
+_________ test_a_min_population_override_cannot_buy_a_pass_over_zero __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_a_min_population_override0')
+
+    def test_a_min_population_override_cannot_buy_a_pass_over_zero(tmp_path):
+        """a design rule lowers a floor; it does not invent a population."""
+        root = artifact(tmp_path, declared=None)
+        result = run_check(root, report=tmp_path / "floor.json",
+                           extra=["--min-population", "0"])
+>       assert result.exit_code == core.EXIT_DID_NOT_RUN, result.stdout
+E       AssertionError: CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=0 waived=0  STUB -- judges nothing  retractions=0 needles=0 radius=0 live=0 frozen=0 false-positive=0 unclassified=0
+E         
+E       assert 0 == 2
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-16         PASS        found=0 checked=4 of 4 not-examined=0 floor=0 waived=0  ST...est-6844/test_a_min_population_override0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-zmy_87py')).exit_code
+E        +  and   2 = core.EXIT_DID_NOT_RUN
+
+tools\tests\test_check_16.py:480: AssertionError
+___________ test_the_committed_fixture_reproduces_its_pinned_report ___________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-6844/test_the_committed_fixture_rep0')
+
+    def test_the_committed_fixture_reproduces_its_pinned_report(tmp_path):
+        """a design rule's anti-rot comparison, over the STRUCTURED report and nothing prose."""
+        root = conftest.broken_fixture(FIXTURE)
+        expectation = json.loads(
+            (Path(root) / EXPECTATION_FILE).read_text(encoding="utf-8"))
+    
+        result = run_check(root, report=tmp_path / "fixture.json")
+        assert result.report is not None, result.stdout
+    
+        for field in PINNED_FIELDS:
+            assert field in expectation, (
+                "the expectation file does not pin %r, so this comparison is "
+                "weaker than it reads" % field)
+>           assert result.report[field] == expectation[field], (
+                "%s: report %r != pinned %r"
+                % (field, result.report[field], expectation[field]))
+E           AssertionError: code: report 0 != pinned 1
+E           assert 0 == 1
+
+tools\tests\test_check_16.py:501: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_check_16.py::test_an_artifact_with_no_declaration_refuses_rather_than_passing
+FAILED tools/tests/test_check_16.py::test_the_refusal_names_the_file_and_the_repair
+FAILED tools/tests/test_check_16.py::test_a_declaration_that_is_not_json_refuses_rather_than_reporting_clean
+FAILED tools/tests/test_check_16.py::test_a_declaration_with_no_retracted_key_refuses
+FAILED tools/tests/test_check_16.py::test_a_live_retracted_figure_is_a_finding
+FAILED tools/tests/test_check_16.py::test_the_finding_carries_its_line_number
+FAILED tools/tests/test_check_16.py::test_a_bare_numeric_needle_inside_a_longer_number_is_not_a_finding
+FAILED tools/tests/test_check_16.py::test_the_false_positive_is_counted_rather_than_dropped
+FAILED tools/tests/test_check_16.py::test_a_word_form_needle_without_its_context_terms_is_a_false_positive
+FAILED tools/tests/test_check_16.py::test_a_word_form_needle_WITH_its_context_terms_is_live
+FAILED tools/tests/test_check_16.py::test_a_figure_quoted_beside_a_withdrawal_marker_is_frozen_not_live
+FAILED tools/tests/test_check_16.py::test_the_declaration_is_scanned_like_every_other_file
+FAILED tools/tests/test_check_16.py::test_a_marker_outside_the_radius_does_not_freeze_a_live_line
+FAILED tools/tests/test_check_16.py::test_the_effective_radius_prints_so_a_widening_cannot_be_invisible
+FAILED tools/tests/test_check_16.py::test_an_empty_declaration_with_NO_review_date_is_a_finding
+FAILED tools/tests/test_check_16.py::test_a_retraction_with_no_needles_is_a_finding
+FAILED tools/tests/test_check_16.py::test_a_retraction_with_no_reason_is_a_finding
+FAILED tools/tests/test_check_16.py::test_the_population_line_carries_both_counts_and_the_needle_count
+FAILED tools/tests/test_check_16.py::test_a_min_population_override_cannot_buy_a_pass_over_zero
+FAILED tools/tests/test_check_16.py::test_the_committed_fixture_reproduces_its_pinned_report
+20 failed, 5 passed in 6.20s
+EXIT=1
+
+
+===============================================================================
+
+The exit code above is the pytest process's own, read from $? immediately after
+the redirection and appended to the capture file, not inferred from the summary
+line and not read through a pipeline stage.
+
+Twenty of twenty-five failed and five passed. The five that pass are the ones a
+stub can satisfy: the module declares an id inside the declared universe, its
+marker set carries a reason beside every term, an empty dated declaration
+passes over a real population (the stub passes everything), the population
+identity closes, and a unit-carrying needle matches nothing (the stub matches
+nothing at all). They are listed rather than hidden because a RED that claims
+every assertion failed is easier to write and harder to trust.

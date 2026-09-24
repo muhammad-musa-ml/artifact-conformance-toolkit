@@ -1,0 +1,15 @@
+{
+  "company": "A Consultancy",
+  "dates": "Month YYYY - Month YYYY",
+  "detail": {
+    "done": "Synthetic stand-in. Nothing here describes real work.",
+    "how": "Synthetic stand-in. Nothing here describes a real approach.",
+    "metrics": [
+      "P1-B1: a figure this fixture never puts under obligation, present only so the entry is not empty [BACKING: designed, not yet measured -- P1 has no reproducing artifact yet]"
+    ]
+  },
+  "display_name": "Synthetic data engagement",
+  "kind": "experience",
+  "role": "Example Role One",
+  "slug": "example-beta"
+}

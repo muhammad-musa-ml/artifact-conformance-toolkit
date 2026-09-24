@@ -1,0 +1,32 @@
+{
+  "artifact": "broken-not-a-work-tree",
+  "dated_at": "2026-09-15",
+  "figures": {
+    "items_ok": {
+      "canon_bullet": "example-alpha:P2-B1",
+      "canon_value": 2,
+      "derived_from": [
+        "results/raw/*.json#count(ok)"
+      ],
+      "not_shown": "Three synthetic items. This record exists so the fixture's only defect is that the directory is not a git work tree.",
+      "population": 3,
+      "population_label": "replayed items",
+      "reproduce_criterion": {
+        "kind": "exact",
+        "tolerance": 0
+      },
+      "runs": [],
+      "similar": "CONFIRMS",
+      "similar_reason_ref": "register-fragments/broken-not-a-work-tree.md",
+      "threshold_claim": false,
+      "tier_achieved": "derive",
+      "unit": "items",
+      "value": 2
+    }
+  },
+  "gate_token": "0000000000000000000000000000000000000000000000000000000000000000",
+  "schema": "canonkit/figures/1",
+  "schema_version": "canonkit/1",
+  "started_at": "2026-09-15T09:00:00+05:00",
+  "started_at_utc": "2026-09-15T04:00:00Z"
+}

@@ -1,0 +1,53 @@
+{
+  "artifact": "broken-figure-in-prose",
+  "dated_at": "2026-09-15",
+  "figures": {
+    "median_latency_ms": {
+      "canon_bullet": "example-alpha:P2-B5",
+      "canon_value": 14.0,
+      "derived_from": [
+        "results.json#replay.median"
+      ],
+      "not_shown": "One replay against one warm service.",
+      "population": 500,
+      "population_label": "replayed requests",
+      "reproduce_criterion": {
+        "kind": "rel",
+        "tolerance": 0.1
+      },
+      "runs": [],
+      "similar": "CONFIRMS",
+      "similar_reason_ref": "register-fragments/broken-figure-in-prose.md",
+      "threshold_claim": false,
+      "tier_achieved": "recompute",
+      "unit": "ms",
+      "value": 12.5
+    },
+    "service_port": {
+      "canon_bullet": "example-alpha:P2-B6",
+      "canon_value": 6333,
+      "derived_from": [
+        "provenance.json#service.listen"
+      ],
+      "not_shown": "The socket the harness happened to bind on this host.",
+      "population": 1,
+      "population_label": "listening socket",
+      "reproduce_criterion": {
+        "kind": "abs",
+        "tolerance": 0
+      },
+      "runs": [],
+      "similar": "CONFIRMS",
+      "similar_reason_ref": "register-fragments/broken-figure-in-prose.md",
+      "threshold_claim": false,
+      "tier_achieved": "recompute",
+      "unit": "tcp-port",
+      "value": 6333
+    }
+  },
+  "gate_token": "0000000000000000000000000000000000000000000000000000000000000000",
+  "schema": "canonkit/figures/1",
+  "schema_version": "canonkit/1",
+  "started_at": "2026-09-15T09:00:00+05:00",
+  "started_at_utc": "2026-09-15T04:00:00Z"
+}

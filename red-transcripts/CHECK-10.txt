@@ -1,0 +1,304 @@
+CHECK-10 -- THE RED TRANSCRIPT
+===========================================
+
+CHECK-10 is a property of the RUNNER rather than a module under tools/checks/,
+and that is exactly why this file exists. The reasoning is the same as its
+sibling for CHECK-11 and is set out there in full: an earlier plan's audit derives its
+population from a check-module glob and a transcript glob, a runner property
+matches neither, and without these two files "every checker has already FAILED on
+a real defect" would read as satisfied over nine of eleven.
+
+WHAT CHECK-10 REQUIRES, verbatim from the project requirements document:
+
+    A check may be waived only by a waivers[] entry carrying
+    {check_id, reason, dated_at}, and the checker prints the waiver count in its
+    summary, so waivers are countable rather than invisible.
+
+Two halves. The SHAPE, and the COUNT. Both are stubbed below, and both fail on a
+verdict.
+
+THE CONTROL a design rule (HARD) ADDS ON TOP OF THE SHAPE
+--------------------------------------------------
+A waiver present in a run's output that was not in the LAST COMMITTED version of
+waivers.json is ITSELF a finding. The reason is not fastidiousness: build agents
+run unattended, and a waiver a build agent can write is not a waiver, it is an
+off switch on the checker that agent is being measured by. The owner round trip
+-- a human, a reason, and a commit -- IS the feature.
+
+So the runner reads the working copy, reads the committed copy back through git,
+and compares them. Reading the committed copy from git rather than from a cache
+the same process wrote is the whole mechanism; a cached comparison would be the
+run agreeing with itself.
+
+WHAT MAKES THIS A REAL RED RATHER THAN A MISSING FILE
+------------------------------------------------------
+tools/conformance.py was REGISTERED AND RUNNABLE when this was captured. It
+discovered the check package, ran every module that exists at this wave, printed
+a population line for each, built both runner rows, aggregated the codes and
+wrote the structured report. Two named stub points carried the CHECK-10 property,
+and nothing else:
+
+    resolve_waivers()          the run's own waivers record is honoured as
+                               written; the committed copy is NEVER consulted, so
+                               a waiver the owner did not commit silences the
+                               finding it names
+    waived_count_for_line()    the waiver count printed beside every check is
+                               hard-wired to zero, whatever the run actually read
+
+Every failure line below is therefore an assertion about a VERDICT produced by a
+runner that really ran, over inputs that really exist.
+
+READ THE QUOTED CHECK-10 LINE IN THE SECOND FAILURE. The run honoured one waiver
+-- the line says `honoured=1` in its own note -- and printed `waived=0` on the
+same line. That pair, in one line, is CHECK-10's second half failing in the most
+legible way it can: the count is present, and it is wrong. A wrong number reads
+as detail where a missing one would have read as a question. The last failure in
+this run shows the same disagreement at `honoured=2`.
+
+THE FIXTURE, AND WHY ITS DEFECT IS NOT IN THE COMMITTED BYTES
+--------------------------------------------------------------
+fixtures/broken-artifacts/broken-uncommitted-waiver/ is the committed one-known-
+bad input. What it commits is the SHAPE -- a valid, owner-authored waiver
+and the record that holds it -- because the defect itself cannot be committed:
+
+    a waiver that is UNCOMMITTED stops being uncommitted the moment it enters
+    the index.
+
+The tests therefore copy that tree, commit the copy through
+conftest.committed_tree, and write a SECOND waiver into the working copy only.
+The committed half is the baseline the checker compares against; the added half
+is the defect. That is stated in the fixture's own README rather than left for a
+reader to work out from the absence.
+
+REVIEW CRITERION FOR THIS FILE, stated so it can be checked rather than assumed:
+the failure lines below must name ASSERTIONS ON THE VERDICT. A transcript whose
+failure line instead names a failed module load, a collection failure, an absent
+input, or an argument parser rejecting a flag is a FALSE RED and must be rejected
+and recaptured. That is mechanically checkable with a case-insensitive grep over
+five shapes, and the plan states the pattern.
+
+THE PATTERN IS DELIBERATELY NOT PASTED HERE, for the reason its sibling file sets
+out: a transcript that quoted its own needle set would match that grep against
+its own prose and fail the gate it exists to satisfy. It returned 0 against this
+file when this was captured, and against the raw pytest output before it was
+framed.
+
+CAPTURED
+--------
+  command      .venv/Scripts/python.exe -m pytest tools/tests/test_waivers.py -q
+  cwd          <repo root>
+  interpreter  CPython 3.12.11, pytest 9.1.1
+  parent HEAD  cbeaec3bd340d9c6b09c9733c5716502ebbdb5b6
+  redirection  > .reports/p0109-RED-check10.txt 2>&1   (never a pipe: a command
+               piped into another process returns the PIPE's exit status, not
+               the command's)
+
+VERBATIM OUTPUT
+---------------
+FF.F.FFF                                                                 [100%]
+================================== FAILURES ===================================
+_____________________ test_uncommitted_waiver_is_finding ______________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5868/test_uncommitted_waiver_is_fin0')
+
+    def test_uncommitted_waiver_is_finding(tmp_path):
+        """A waiver added to the working copy only is itself a finding.
+    
+        The artifact carries one real CHECK-01 finding. The working copy then gains
+        a well-formed waiver naming it, and the committed copy does not. A checker
+        that honoured it would report a clean artifact -- which is exactly what an
+        unattended build agent would produce for itself.
+        """
+        work = committed_artifact(tmp_path, entries=())
+        record = json.loads((work / "waivers.json").read_text(encoding="utf-8"))
+        record["waivers"] = [a_waiver()]
+        write_json(work / "waivers.json", record)
+    
+        result = run_conformance(work, report=tmp_path / "report.json")
+        report = result.report
+        assert report is not None, result.stdout + result.stderr
+    
+        ten = entry(report, "CHECK-10")
+        assert ten is not None, report["checks"]
+>       assert ten["code"] == core.EXIT_FINDING, (
+            "a waiver present in the working copy and absent from the committed "
+            "one was honoured instead of reported. CHECK-10's line was:\n%s"
+            % result.stdout)
+E       AssertionError: a waiver present in the working copy and absent from the committed one was honoured instead of reported. CHECK-10's line was:
+E         checks found 1 of 9 declared
+E           (not yet landed: 8 -- CHECK-02, CHECK-03, CHECK-04, CHECK-05, CHECK-06, CHECK-07, CHECK-08, CHECK-09)
+E         CHECK-01         PASS        found=0 checked=1 of 1 not-examined=0 floor=1 waived=0  unclassified=0 leaks=0 unpopulated=0 documents=1 of 2
+E         CHECK-10         PASS        found=0 checked=2 of 2 not-examined=0 floor=1 waived=0  sources=1 working=1 committed=0 honoured=1 uncommitted=0 malformed=0 (no committed copy resolved)
+E         CHECK-11         PASS        found=0 checked=2 of 2 not-examined=0 floor=1 waived=0  inspected=2 population-absent=0 pass-over-zero=0 banned-verdict=0 verdict-code-mismatch=0 (this check is not its own witness)
+E         checks: 3 pass, 0 finding, 0 did-not-run, 0 guard-fail, 0 waived
+E         guard GUARD-BANNED-SPELLING   PASS        the banned results-record spelling (the banned-spelling rule) is absent
+E         
+E       assert 0 == 1
+E        +  where 1 = core.EXIT_FINDING
+
+tools\tests\test_waivers.py:100: AssertionError
+______________ test_the_waiver_count_prints_in_the_summary_line _______________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5868/test_the_waiver_count_prints_i0')
+
+    def test_the_waiver_count_prints_in_the_summary_line(tmp_path):
+        """CHECK-10's second half: waivers are countable rather than invisible."""
+        work = committed_artifact(tmp_path, entries=[a_waiver()])
+    
+        result = run_conformance(work, report=tmp_path / "report.json")
+>       assert "waived=1" in result.stdout, (
+            "the run honoured one waiver and printed none. stdout:\n%s"
+            % result.stdout)
+E       AssertionError: the run honoured one waiver and printed none. stdout:
+E         checks found 1 of 9 declared
+E           (not yet landed: 8 -- CHECK-02, CHECK-03, CHECK-04, CHECK-05, CHECK-06, CHECK-07, CHECK-08, CHECK-09)
+E         CHECK-01         PASS        found=0 checked=1 of 1 not-examined=0 floor=1 waived=0  unclassified=0 leaks=0 unpopulated=0 documents=1 of 2
+E         CHECK-10         PASS        found=0 checked=2 of 2 not-examined=0 floor=1 waived=0  sources=1 working=1 committed=0 honoured=1 uncommitted=0 malformed=0 (no committed copy resolved)
+E         CHECK-11         PASS        found=0 checked=2 of 2 not-examined=0 floor=1 waived=0  inspected=2 population-absent=0 pass-over-zero=0 banned-verdict=0 verdict-code-mismatch=0 (this check is not its own witness)
+E         checks: 3 pass, 0 finding, 0 did-not-run, 0 guard-fail, 0 waived
+E         guard GUARD-BANNED-SPELLING   PASS        the banned results-record spelling (the banned-spelling rule) is absent
+E         
+E       assert 'waived=1' in 'checks found 1 of 9 declared\n  (not yet landed: 8 -- CHECK-02, CHECK-03, CHECK-04, CHECK-05, CHECK-06, CHECK-07, CHE...-not-run, 0 guard-fail, 0 waived\nguard GUARD-BANNED-SPELLING   PASS        the banned results-record spelling (the banned-spelling rule) is absent\n'
+E        +  where 'checks found 1 of 9 declared\n  (not yet landed: 8 -- CHECK-02, CHECK-03, CHECK-04, CHECK-05, CHECK-06, CHECK-07, CHE...-not-run, 0 guard-fail, 0 waived\nguard GUARD-BANNED-SPELLING   PASS        the banned results-record spelling (the banned-spelling rule) is absent\n' = CliResult(exit_code=0, stdout='checks found 1 of 9 declared\n  (not yet landed: 8 -- CHECK-02, CHECK-03, CHECK-04, CHE...sers/user/projects/artifact-conformance-toolkit'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-_c7plz7o')).stdout
+
+tools\tests\test_waivers.py:123: AssertionError
+___________ test_a_waiver_missing_any_required_key_is_not_honoured ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5868/test_a_waiver_missing_any_requ0')
+
+    def test_a_waiver_missing_any_required_key_is_not_honoured(tmp_path):
+        """All three of check_id, reason and dated_at, one test per omission.
+    
+        A reason is prose a reader can disagree with. A date is when the owner
+        decided. A check id is what was excused. Two of the three make the entry
+        unreviewable and the third makes it unbounded, so none of them is optional.
+        """
+        for dropped in conformance.WAIVER_REQUIRED_KEYS:
+            work = committed_artifact(tmp_path, entries=[a_waiver(drop=dropped)],
+                                      slug="drop-%s" % dropped.replace("_", "-"))
+            result = run_conformance(work, report=tmp_path / ("%s.json" % dropped))
+            ten = entry(result.report, "CHECK-10")
+>           assert ten["code"] == core.EXIT_FINDING, (
+                "a waiver with no %r was accepted: %r" % (dropped, ten))
+E           AssertionError: a waiver with no 'check_id' was accepted: {'check_id': 'CHECK-10', 'checked': 2, 'code': 0, 'finding_ids': [], 'floor': 1, 'found': 0, 'listed': 2, 'not_examined': 0, 'note': 'sources=1 working=1 committed=0 honoured=0 uncommitted=0 malformed=0 (no committed copy resolved)', 'source': 'runner:conformance.py', 'verdict': 'PASS', 'waived': 0}
+E           assert 0 == 1
+E            +  where 1 = core.EXIT_FINDING
+
+tools\tests\test_waivers.py:157: AssertionError
+__________ test_an_absent_waivers_record_is_did_not_run_for_check_10 __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5868/test_an_absent_waivers_record_0')
+
+    def test_an_absent_waivers_record_is_did_not_run_for_check_10(tmp_path):
+        """No record and no committed copy: the check could not look."""
+        root = artifact(tmp_path, waivers=None)
+        result = run_conformance(root, report=tmp_path / "report.json")
+        ten = entry(result.report, "CHECK-10")
+        assert ten["checked"] == 0, ten
+>       assert ten["code"] == core.EXIT_DID_NOT_RUN, (
+            "a waiver check with nothing to resolve reported code %d" % ten["code"])
+E       AssertionError: a waiver check with nothing to resolve reported code 0
+E       assert 0 == 2
+E        +  where 2 = core.EXIT_DID_NOT_RUN
+
+tools\tests\test_waivers.py:185: AssertionError
+_________ test_a_rewritten_reason_makes_a_committed_waiver_a_new_one __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5868/test_a_rewritten_reason_makes_0')
+
+    def test_a_rewritten_reason_makes_a_committed_waiver_a_new_one(tmp_path):
+        """The committed entry is the whole entry, not merely its check id.
+    
+        An owner who committed a waiver for one reason has not thereby committed a
+        waiver whose reason was rewritten afterwards -- which is the edit an
+        unattended agent would make to widen one.
+        """
+        work = committed_artifact(tmp_path, entries=[a_waiver()])
+        record = json.loads((work / "waivers.json").read_text(encoding="utf-8"))
+        record["waivers"][0]["reason"] = "rewritten after the commit"
+        write_json(work / "waivers.json", record)
+    
+        result = run_conformance(work, report=tmp_path / "report.json")
+        ten = entry(result.report, "CHECK-10")
+>       assert ten["code"] == core.EXIT_FINDING, ten
+E       AssertionError: {'check_id': 'CHECK-10', 'checked': 2, 'code': 0, 'finding_ids': [], ...}
+E       assert 0 == 1
+E        +  where 1 = core.EXIT_FINDING
+
+tools\tests\test_waivers.py:204: AssertionError
+________________ test_the_committed_fixture_carries_the_shape _________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5868/test_the_committed_fixture_car0')
+
+    def test_the_committed_fixture_carries_the_shape(tmp_path):
+        """a design rule: the one-known-bad input is a COMMITTED tree, not a temp-path guess.
+    
+        The fixture is the SHAPE a checker has to refuse; the test dirties a copy of
+        it, because a waiver that is uncommitted cannot itself be committed.
+        """
+        fixture = conftest.broken_fixture(UNCOMMITTED_FIXTURE)
+        record = json.loads((fixture / "waivers.json").read_text(encoding="utf-8"))
+        assert record["waivers"], "the fixture declares no waiver at all"
+        for entry_obj in record["waivers"]:
+            assert conformance.waiver_is_well_formed(entry_obj), entry_obj
+    
+        work = conftest.committed_tree(tmp_path, fixture)
+        clean = run_conformance(work, report=tmp_path / "clean.json")
+        assert entry(clean.report, "CHECK-10")["code"] == core.EXIT_PASS, clean.stdout
+    
+        record["waivers"].append(a_waiver(check_id="CHECK-03",
+                                          finding_id="limits:unedited"))
+        write_json(work / "waivers.json", record)
+        dirty = run_conformance(work, report=tmp_path / "dirty.json")
+        ten = entry(dirty.report, "CHECK-10")
+>       assert ten["code"] == core.EXIT_FINDING, (
+            "the fixture's own shape did not reproduce the finding:\n%s"
+            % dirty.stdout)
+E       AssertionError: the fixture's own shape did not reproduce the finding:
+E         checks found 1 of 9 declared
+E           (not yet landed: 8 -- CHECK-02, CHECK-03, CHECK-04, CHECK-05, CHECK-06, CHECK-07, CHECK-08, CHECK-09)
+E         CHECK-01         DID-NOT-RUN found=0 checked=0 of 0 not-examined=0 floor=1 waived=0  there is no results/figures.json under \home\user\AppData\Local\Temp\pytest-of-user\pytest-5868\test_the_committed_fixture_car0\broken-uncommitted-waiver-committed, so there are zero figures to examine. REPAIR: run derive.py before the checker. (STUB: zero population reported as a pass)
+E         CHECK-10         PASS        found=0 checked=3 of 3 not-examined=0 floor=1 waived=0  sources=1 working=2 committed=0 honoured=2 uncommitted=0 malformed=0 (no committed copy resolved)
+E         CHECK-11         PASS        found=0 checked=2 of 2 not-examined=0 floor=1 waived=0  inspected=2 population-absent=0 pass-over-zero=0 banned-verdict=0 verdict-code-mismatch=0 (this check is not its own witness)
+E         checks: 3 pass, 0 finding, 0 did-not-run, 0 guard-fail, 0 waived
+E         guard GUARD-BANNED-SPELLING   PASS        the banned results-record spelling (the banned-spelling rule) is absent
+E         
+E       assert 0 == 1
+E        +  where 1 = core.EXIT_FINDING
+
+tools\tests\test_waivers.py:230: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_waivers.py::test_uncommitted_waiver_is_finding - Asse...
+FAILED tools/tests/test_waivers.py::test_the_waiver_count_prints_in_the_summary_line
+FAILED tools/tests/test_waivers.py::test_a_waiver_missing_any_required_key_is_not_honoured
+FAILED tools/tests/test_waivers.py::test_an_absent_waivers_record_is_did_not_run_for_check_10
+FAILED tools/tests/test_waivers.py::test_a_rewritten_reason_makes_a_committed_waiver_a_new_one
+FAILED tools/tests/test_waivers.py::test_the_committed_fixture_carries_the_shape
+6 failed, 2 passed in 5.12s
+
+EXIT=1
+
+The exit code above is the pytest process's own, read from $? immediately after
+the redirection.
+
+6 failed, 2 passed. The two passes are the assertions a runner that honours
+everything satisfies HONESTLY, and they are the ones that make this transcript
+evidence rather than noise:
+
+  test_a_committed_waiver_is_honoured
+      the OTHER direction. A round trip nobody can complete is a ban, not a
+      control, so the check has to honour an owner-committed waiver. A stub that
+      honours everything passes this one correctly -- and a GREEN implementation
+      that refused every waiver would pass all six failures below while breaking
+      this.
+
+  test_an_empty_but_present_record_still_has_a_population
+      the shipped waivers record is EMPTY but PRESENT, and "the owner declared
+      none" is a fact rather than the absence of one. CHECK-10's population is
+      therefore at least one whenever the record exists, which is what stops this
+      check being a 0/0 pass on the overwhelmingly common artifact.
+
+Together those two are why the six failures below are about DISCRIMINATION. The
+stub is not wrong because it honours waivers; it is wrong because it honours
+waivers the owner never committed, never honours the shape rule, and reports a
+count it did not measure.

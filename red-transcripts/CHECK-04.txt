@@ -1,0 +1,482 @@
+CHECK-04 -- THE RED TRANSCRIPT
+===========================================
+
+WHAT CHECK-04 REQUIRES, verbatim from the project requirements document:
+
+    Fails when `results/gate.json` is absent, when its `dated_at` is not earlier
+    than every measurement's `started_at`, or when a measurement lacks the gate
+    token. A correctly recorded FAILED gate is a PASS for this check.
+
+THE BRANCH THAT MUST NOT FIRE
+-------------------------------
+The last sentence of the requirement is the part a check written to "refuse
+anything that looks wrong" gets backwards. A gate that FAILED, wrote a full
+record, named what failed, minted its token and had that token stamped on the
+run is a correctly closed path -- not a defect. All three facts CHECK-04 asks
+about hold. Refusing it would collapse "this path did not measure, and said so"
+into "this path measured without authorisation", and only one of those is a
+finding.
+
+a design rule is what makes this checkable at all: a failed gate mints a token
+PRECISELY so a measurement that ran anyway carries a key rather than no key.
+
+ORDERING IS PROVEN FROM THE RECORDS, NEVER FROM THE FILESYSTEM
+----------------------------------------------------------------
+The convenient answer -- compare the two files' modification times -- is wrong
+here for reasons that are measured rather than stylistic. An ordinary copy
+PRESERVES that attribute, so a results tree carried forward from an earlier
+session arrives with entirely plausible times on every file; and it is a single
+command to set. templates/verify.py records the same argument for the same
+reason.
+
+So the ordering is read from the ISO timestamps recorded INSIDE each record.
+Two tests assert that rather than trusting it: one sets a MISLEADING file time
+-- the measurement stamped an hour before the gate, while the recorded stamps
+stay correct -- and asserts the verdict does not move; the other tokenizes the
+check module and asserts no CODE token names that attribute, which catches the
+`st_` and `get` spellings by the same assertion.
+
+READ THE SECOND OF THOSE TWO CAREFULLY IN THIS RUN. The misleading-file-time
+test PASSES below, and that pass is NOT evidence: a check whose detection is
+stubbed to find nothing ignores the filesystem the same way it ignores
+everything else. It becomes evidence in the GREEN commit, where the check has
+something to say and still says nothing about the file times. It is listed among
+the passes below with that caveat attached rather than counted as a win.
+
+WHAT MAKES THIS A REAL RED RATHER THAN A MISSING FILE
+------------------------------------------------------
+a design rule requires the transcript to be captured BEFORE the implementation commit,
+with commit order as the evidence. The trap is that "before the implementation"
+reads as "before any code exists", and a transcript captured then records a
+module that could not be loaded or an input that was never written. Each exits
+non-zero, each satisfies a naive "non-zero exit" acceptance test, and none of
+them says anything about whether the check DISCRIMINATES.
+
+So tools/checks/check_04.py was REGISTERED AND RUNNABLE when this was captured.
+Discovery found it, it walked results/, it excluded the gate record and the
+per-item records and counted both with a reason beside each, it parsed the
+gate's dated_at and every measurement's started_at, it loaded every token, it
+reported a population and it wrote a structured report. ONE function was
+stubbed:
+
+    gate_findings()   returns no finding, whatever the ordering says
+
+READ THE QUOTED POPULATION LINE IN THE FIRST FAILURE. It says
+
+    CHECK-04  PASS  found=0 checked=1 of 1 skipped=0 floor=1 waived=0
+    gate=ABSENT measurements=1 of 1
+
+The check LOOKED FOR THE GATE, RECORDED THAT IT WAS NOT THERE, printed that
+fact in its own summary line -- and returned PASS over an artifact in which
+nothing authorised anything. That is precisely the shape a false RED cannot
+demonstrate: the inputs were real, the measurement happened, and only the
+verdict was wrong.
+
+THE FIXTURE, AND WHY IT CARRIES TWO DEFECTS RATHER THAN ONE
+--------------------------------------------------------------------
+fixtures/broken-artifacts/broken-gate-after-measurement/ carries two defects
+belonging to the SAME check, which is a different thing from a fixture that
+fails several checks at once:
+
+    the gate is dated an hour AFTER the run that figures.json records
+    a second run record carries no gate token at all
+
+Two defects, two finding ids, and a THIRD run record that is correct in both
+respects -- so a rule that simply refused every record would fail the fixture's
+own test rather than pass it. Everything else about the tree is correct on
+purpose, and test_only_check_04_refuses_the_check_04_fixture runs CHECK-01,
+CHECK-02 and CHECK-03 over it and asserts all three PASS.
+
+THAT TEST ALREADY EARNED ITS PLACE, BEFORE THE CHECK WAS EVEN WRITTEN. Its
+first run failed: CHECK-01 reported four unclassified numerals in the fixture's
+own README, because the prose named record and module filenames -- and a
+filename carrying a run number is a numeral CHECK-01 cannot classify in
+un-rendered prose. The fixture was refused by a check that has nothing to do
+with its defect. The README now DESCRIBES those files instead of spelling them,
+and says so in the document itself. Without that test the fixture would have
+been committed carrying a second, accidental defect, and every later assertion
+about which check refused it would have been ambiguous.
+
+WHAT THIS CHECK DOES NOT DO, DEMONSTRATED RATHER THAN CLAIMED
+---------------------------------------------------------------
+test_check_04_and_verify_answer_different_questions_about_one_token builds the
+chain by RUNNING THE REAL GATE, so the token is one the gate genuinely minted
+from its own content, and then walks two states. Both were measured in this run:
+
+  state one   the gate FAILED and was correctly recorded, the run carries that
+              gate's token. CHECK-04 passes. verify.py ALSO has nothing to say,
+              and the captured output below shows `VERIFY-DERIVE PASS`. Neither
+              is broken; each is answering its own question truthfully.
+  state two   the gate is fixed and re-run. a design rule makes the token a function of
+              gate CONTENT, so the new gate mints a DIFFERENT token and the
+              measurement is left carrying a key that opens nothing. The
+              captured output shows `VERIFY-DERIVE FAIL found=1`. THAT is where
+              a design rule's poisoned token becomes visible, and verify.py is what says
+              so.
+
+Only the final assertion of that test fails below -- the one about CHECK-04's
+own verdict in state two -- because that verdict is the stubbed one.
+
+REVIEW CRITERION FOR THIS FILE, stated so it can be checked rather than assumed:
+the failure lines below must name ASSERTIONS ON THE VERDICT. A transcript whose
+failure line instead names a failed module load, a collection failure, an absent
+input, or an argument parser rejecting a flag is a FALSE RED and must be
+rejected and recaptured. That is mechanically checkable with a case-insensitive
+grep over five shapes, and the plan states the pattern.
+
+THE PATTERN IS DELIBERATELY NOT PASTED HERE. A transcript that quoted its own
+needle set would match that grep against its own prose and fail the gate it
+exists to satisfy. The pattern lives in the plan's acceptance criteria. It
+returned 0 against the raw pytest output below, and against this assembled file.
+
+CAPTURED
+--------
+  command      .venv/Scripts/python.exe -m pytest tools/tests/test_check_04.py -q
+  cwd          the agent worktree for an earlier plan (paths below show it)
+  interpreter  CPython 3.12.11, pytest 9.1.1
+  parent HEAD  08c638ac7918515f7e19d1a54f841b63fb8cace9, this plan's CHECK-02
+               GREEN commit. The base of the whole plan is
+               0d628de100e5b12025a5aa4cfb28eaccd5afdbc8
+  redirection  > .reports/p0110-RED-check04.txt 2>&1   (never a pipe: a command
+               piped into another process returns the PIPE's exit status, not
+               the command's)
+
+The VERBATIM OUTPUT below was concatenated from that redirected file rather than
+retyped, so no transcription step sits between the run and this record.
+
+VERBATIM OUTPUT
+---------------
+...FFFFFFF....F.F..FF                                                    [100%]
+================================== FAILURES ===================================
+______________________ test_an_absent_gate_is_a_finding _______________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5917/test_an_absent_gate_is_a_findi0')
+
+    def test_an_absent_gate_is_a_finding(tmp_path):
+        root = artifact(tmp_path, slug="no-gate", gate=False)
+        result = run_check(root, report=tmp_path / "no-gate.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-04         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  gate=ABSENT measurements=1 of 1
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-04         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  gate=AB..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-l5zfchpf')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_04.py:248: AssertionError
+________ test_a_gate_dated_after_a_measurement_is_a_finding_naming_it _________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5917/test_a_gate_dated_after_a_meas0')
+
+    def test_a_gate_dated_after_a_measurement_is_a_finding_naming_it(tmp_path):
+        root = artifact(tmp_path, slug="late-gate",
+                        runs=[run_record(started_at=BEFORE_GATE)])
+        result = run_check(root, report=tmp_path / "late-gate.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-04         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  gate=present gate-passed=True gate-dated=2026-09-15T20:00:00-05:00 token=444444444444 measurements=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-04         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  gate=pr..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-8mmn7ydc')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_04.py:257: AssertionError
+________ test_a_gate_dated_at_the_same_instant_did_not_precede_the_run ________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5917/test_a_gate_dated_at_the_same_0')
+
+    def test_a_gate_dated_at_the_same_instant_did_not_precede_the_run(tmp_path):
+        """`not earlier than` is the requirement's wording. Equal is not earlier."""
+        root = artifact(tmp_path, slug="same-instant",
+                        runs=[run_record(started_at=GATE_AT)])
+        result = run_check(root, report=tmp_path / "same-instant.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-04         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  gate=present gate-passed=True gate-dated=2026-09-15T20:00:00-05:00 token=444444444444 measurements=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-04         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  gate=pr..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-75xqr30y')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_04.py:269: AssertionError
+___________ test_a_measurement_with_no_token_is_a_finding_naming_it ___________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5917/test_a_measurement_with_no_tok0')
+
+    def test_a_measurement_with_no_token_is_a_finding_naming_it(tmp_path):
+        root = artifact(tmp_path, slug="no-token",
+                        runs=[run_record(token=None)])
+        result = run_check(root, report=tmp_path / "no-token.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-04         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  gate=present gate-passed=True gate-dated=2026-09-15T20:00:00-05:00 token=444444444444 measurements=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-04         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  gate=pr..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-xeamqz34')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_04.py:278: AssertionError
+_______ test_a_measurement_with_the_wrong_token_is_a_finding_naming_it ________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5917/test_a_measurement_with_the_wr0')
+
+    def test_a_measurement_with_the_wrong_token_is_a_finding_naming_it(tmp_path):
+        root = artifact(tmp_path, slug="wrong-token",
+                        runs=[run_record(token=OTHER_TOKEN)])
+        result = run_check(root, report=tmp_path / "wrong-token.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-04         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  gate=present gate-passed=True gate-dated=2026-09-15T20:00:00-05:00 token=444444444444 measurements=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-04         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  gate=pr..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-78jd3ipu')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_04.py:286: AssertionError
+_______ test_an_unorderable_stamp_is_a_finding_rather_than_a_traceback ________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5917/test_an_unorderable_stamp_is_a0')
+
+    def test_an_unorderable_stamp_is_a_finding_rather_than_a_traceback(tmp_path):
+        """A naive stamp beside an aware one cannot be compared, and Python RAISES
+        while finding that out. The check must name it, not crash on it."""
+        root = artifact(tmp_path, slug="unorderable",
+                        runs=[run_record(started_at="2026-09-15T21:00:00")])
+        result = run_check(root, report=tmp_path / "unorderable.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-04         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  gate=present gate-passed=True gate-dated=2026-09-15T20:00:00-05:00 token=444444444444 measurements=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-04         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  gate=pr..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-sj0ybefh')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_04.py:296: AssertionError
+_________ test_the_three_branches_produce_three_different_finding_ids _________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5917/test_the_three_branches_produc0')
+
+    def test_the_three_branches_produce_three_different_finding_ids(tmp_path):
+        """One verdict for three defects would name the problem, not the repair."""
+        absent = run_check(artifact(tmp_path, slug="ids-absent", gate=False),
+                           report=tmp_path / "ids-absent.json")
+        ordering = run_check(
+            artifact(tmp_path, slug="ids-order",
+                     runs=[run_record(started_at=BEFORE_GATE)]),
+            report=tmp_path / "ids-order.json")
+        token = run_check(artifact(tmp_path, slug="ids-token",
+                                   runs=[run_record(token=None)]),
+                          report=tmp_path / "ids-token.json")
+    
+        sets = [set(absent.report["finding_ids"]),
+                set(ordering.report["finding_ids"]),
+                set(token.report["finding_ids"])]
+        for one in sets:
+>           assert one, "a branch produced no finding id at all"
+E           AssertionError: a branch produced no finding id at all
+E           assert set()
+
+tools\tests\test_check_04.py:316: AssertionError
+___________ test_the_committed_fixture_fails_and_names_both_defects ___________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5917/test_the_committed_fixture_fai0')
+
+    def test_the_committed_fixture_fails_and_names_both_defects(tmp_path):
+        fixture = conftest.broken_fixture(FIXTURE)
+        result = run_check(fixture, report=tmp_path / "fixture.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-04         PASS        found=0 checked=3 of 4 skipped=1 floor=1 waived=0  gate=present gate-passed=True gate-dated=2026-09-15T20:00:00-05:00 token=444444444444 measurements=3 of 4
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-04         PASS        found=0 checked=3 of 4 skipped=1 floor=1 waived=0  gate=pr..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-_8rip3h1')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_04.py:453: AssertionError
+____________ test_the_anti_rot_pin_holds_for_the_known_bad_fixture ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5917/test_the_anti_rot_pin_holds_fo0')
+
+    def test_the_anti_rot_pin_holds_for_the_known_bad_fixture(tmp_path):
+        fixture = conftest.broken_fixture(FIXTURE)
+        expectation_path = fixture / EXPECTATION_FILE
+        assert expectation_path.is_file(), (
+            "%s carries no %s, so its RED evidence has nothing pinning it"
+            % (FIXTURE, EXPECTATION_FILE))
+        expected = json.loads(expectation_path.read_text(encoding="ascii"))
+    
+        result = run_check(fixture, report=tmp_path / "pin.json")
+        assert result.report is not None, "the check wrote no structured report"
+        missing = [field for field in PINNED_FIELDS if field not in result.report]
+        assert not missing, (
+            "the live report no longer carries %r. A renamed field would otherwise "
+            "make this pin compare nothing." % missing)
+        measured = {field: result.report[field] for field in PINNED_FIELDS}
+>       assert measured == expected, (
+            "the structured report drifted from its committed expectation.\n"
+            "  expected: %r\n  measured: %r" % (expected, measured))
+E       AssertionError: the structured report drifted from its committed expectation.
+E           expected: {'check_id': 'CHECK-04', 'checked': 3, 'code': 1, 'finding_ids': ['gate:after-measurement:results/figures.json', 'gate:token-absent:results/raw/run-0002.json'], 'found': 2, 'schema_version': 'canonkit/1'}
+E           measured: {'check_id': 'CHECK-04', 'code': 0, 'found': 0, 'checked': 3, 'finding_ids': [], 'schema_version': 'canonkit/1'}
+E       assert {'check_id': ...cked': 3, ...} == {'check_id': ...2.json'], ...}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Differing items:
+E         {'code': 0} != {'code': 1}
+E         {'found': 0} != {'found': 2}
+E         {'finding_ids': []} != {'finding_ids': ['gate:after-measurement:results/figures.json', 'gate:token-absent:results/raw/run-0002.json']}
+E         Use -v to get more diff
+
+tools\tests\test_check_04.py:487: AssertionError
+_____ test_check_04_and_verify_answer_different_questions_about_one_token _____
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5917/test_check_04_and_verify_answe0')
+
+    def test_check_04_and_verify_answer_different_questions_about_one_token(
+            tmp_path):
+        """The two mechanisms DEMONSTRATED as complementary, not asserted to be.
+    
+        The chain here is built by running the real gate, so the token every record
+        carries is one the gate genuinely minted from its own content.
+    
+        STATE ONE -- the gate FAILED and was correctly recorded, and the run carries
+        that gate's token. CHECK-04 passes: the gate was recorded, it preceded the
+        run, and its token is stamped. verify.py also has nothing to say, because
+        the token the figures claim IS the token the gate in this artifact minted.
+        Neither mechanism is broken here; they are both answering their own
+        question truthfully.
+    
+        STATE TWO -- the gate is fixed and re-run. a design rule makes the token a function
+        of gate CONTENT, so a changed gate mints a DIFFERENT token, and the
+        measurement that ran under the failed one is now carrying a key that opens
+        nothing. THAT is where the poisoned token a design rule describes becomes visible,
+        and verify.py is what says so.
+        """
+        chain = _load("verify_chain_helpers", REPO_ROOT / "tools" / "tests"
+                      / "test_verify_chain.py")
+        root, minted = chain.build_chain(tmp_path)
+        chain.derive_into(root, [chain.ok_rate_spec()])
+    
+        gate_path = Path(root) / "results" / "gate.json"
+        gate = json.loads(gate_path.read_text(encoding="utf-8"))
+        assert gate["run_token"] == minted, gate
+    
+        # -- state one: a correctly recorded FAILED gate, same token -------------
+        gate["passed"] = False
+        gate["failed_ids"] = ["free-vram"]
+        gate["fallback_wording"] = "This path did not measure."
+        write_json(gate_path, gate)
+    
+        failed_state = run_check(root, report=tmp_path / "failed-state.json")
+        assert failed_state.exit_code == core.EXIT_PASS, (
+            "CHECK-04 refused a correctly recorded FAILED gate:\n%s"
+            % failed_state.stdout)
+    
+        _, verify_code, verify_printed = chain.run_verify(root)
+        assert "gate_token mismatch" not in verify_printed, (
+            "verify.py reported a token mismatch while the tokens match, so this "
+            "test is not measuring what it claims:\n%s" % verify_printed)
+    
+        # -- state two: the gate is fixed and re-run, minting a NEW token --------
+        gate["passed"] = True
+        gate["failed_ids"] = []
+        gate["fallback_wording"] = ""
+        gate["run_token"] = OTHER_TOKEN
+        write_json(gate_path, gate)
+    
+        _, verify_code, verify_printed = chain.run_verify(root)
+        assert verify_code == core.EXIT_FINDING, (
+            "verify.py did not refuse a measurement carrying a token the current "
+            "gate never minted:\n%s" % verify_printed)
+        assert "gate_token mismatch" in verify_printed, verify_printed
+    
+        stale = run_check(root, report=tmp_path / "stale.json")
+>       assert stale.exit_code == core.EXIT_FINDING, stale.stdout
+E       AssertionError: CHECK-04         PASS        found=0 checked=2 of 11 skipped=9 floor=1 waived=0  gate=present gate-passed=True gate-dated=2026-09-15T20:21:29.139397-05:00 token=999999999999 measurements=2 of 11
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-04         PASS        found=0 checked=2 of 11 skipped=9 floor=1 waived=0  gate=p..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-40tj31dd')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_04.py:576: AssertionError
+---------------------------- Captured stdout call -----------------------------
+GATE             PASS        found=0 checked=4 of 4 skipped=0 floor=1 waived=0  token 48559b046a31 dated 2026-09-15T20:21:29.139397-05:00
+DERIVE           PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  authored 1 figure(s) over 8 per-item record(s)
+VERIFY-DERIVE    PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0
+VERIFY-DERIVE    FAIL        found=1 checked=1 of 1 skipped=0 floor=1 waived=0
+_________________ test_a_waiver_suppresses_one_named_finding __________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5917/test_a_waiver_suppresses_one_n0')
+
+    def test_a_waiver_suppresses_one_named_finding(tmp_path):
+        root = artifact(tmp_path, slug="waived", runs=[run_record(token=None)])
+        contract = check_04.load_contract()
+        waived = check_04.run(root, contract.CheckContext(waivers=[{
+            "check_id": "CHECK-04",
+            "finding_id": "gate:token-absent:results/raw/run-0001.json",
+            "reason": "the fixture's run is deliberately unauthorised",
+            "dated_at": "2026-09-15T00:00:00-05:00"}]))
+>       assert waived.waived == 1, waived
+E       AssertionError: CheckResult(check_id='CHECK-04', code=0, found=0, checked=1, floor=1, waived=0, skipped=1, listed=2, finding_ids=[], note='gate=present gate-passed=True gate-dated=2026-09-15T20:00:00-05:00 token=444444444444 measurements=1 of 2')
+E       assert 0 == 1
+E        +  where 0 = CheckResult(check_id='CHECK-04', code=0, found=0, checked=1, floor=1, waived=0, skipped=1, listed=2, finding_ids=[], note='gate=present gate-passed=True gate-dated=2026-09-15T20:00:00-05:00 token=444444444444 measurements=1 of 2').waived
+
+tools\tests\test_check_04.py:588: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_check_04.py::test_an_absent_gate_is_a_finding - Asser...
+FAILED tools/tests/test_check_04.py::test_a_gate_dated_after_a_measurement_is_a_finding_naming_it
+FAILED tools/tests/test_check_04.py::test_a_gate_dated_at_the_same_instant_did_not_precede_the_run
+FAILED tools/tests/test_check_04.py::test_a_measurement_with_no_token_is_a_finding_naming_it
+FAILED tools/tests/test_check_04.py::test_a_measurement_with_the_wrong_token_is_a_finding_naming_it
+FAILED tools/tests/test_check_04.py::test_an_unorderable_stamp_is_a_finding_rather_than_a_traceback
+FAILED tools/tests/test_check_04.py::test_the_three_branches_produce_three_different_finding_ids
+FAILED tools/tests/test_check_04.py::test_the_committed_fixture_fails_and_names_both_defects
+FAILED tools/tests/test_check_04.py::test_the_anti_rot_pin_holds_for_the_known_bad_fixture
+FAILED tools/tests/test_check_04.py::test_check_04_and_verify_answer_different_questions_about_one_token
+FAILED tools/tests/test_check_04.py::test_a_waiver_suppresses_one_named_finding
+11 failed, 10 passed in 5.26s
+
+EXIT=1
+
+The exit code above is the pytest process's own, read from $? immediately after
+the redirection.
+
+11 failed, 10 passed, 21 collected. The COLLECTED COUNT is stated because a
+verdict read without its population is a verdict about nothing.
+
+The ten passes are what make the eleven failures readable as a DISCRIMINATION
+result rather than as a module that does not work. Eight of them are evidence:
+
+  the module satisfies the check protocol and discovery finds it
+  a gate earlier than every measurement, with its token stamped, PASSES
+  a correctly recorded FAILED gate PASSES, and the summary line says
+      `gate-passed=False` beside that pass, so the carve-out is visible rather
+      than inferable
+  the check module names the filesystem time attribute ONLY in comments, and
+      no code token in it names that attribute at all -- asserted by the
+      tokenizer, over a file the test confirms it really read
+  a gate with no measurement under it is DID-NOT-RUN, and the verdict column
+      reads DID-NOT-RUN rather than the banned word
+  a results file recording no start is counted as not-examined WITH CHECK-06
+      named as the owner of that gap, so it reads as a boundary rather than an
+      oversight
+  CHECK-01, CHECK-02 and CHECK-03 all PASS over the CHECK-04 fixture
+  the committed expectation holds no wording-bearing field
+  the population floor override prints the EFFECTIVE value and demotes
+
+TWO OF THOSE PASSES ARE WORTH LESS THAN THEY LOOK, AND SAYING SO IS THE POINT.
+
+The misleading-file-time test passes here, and that pass is not evidence: a
+check whose detection is stubbed to find nothing ignores the filesystem the same
+way it ignores everything else. It only becomes evidence in the GREEN commit,
+where the check has findings available to it and still does not move when only
+the file times change. It is listed here with the caveat attached rather than
+counted as a win, because "a test passed for the wrong reason" is the failure
+this phase has already been bitten by once.
+
+The FAILED-gate pass is the opposite case and is real: the stub returns no
+finding, so a pass there is consistent with a check that would pass everything
+-- but the assertion beside it reads `gate_passed is False` out of the
+structured report, and that value was MEASURED from the record rather than
+supplied by the stub.
+
+WHAT THE GREEN COMMIT CHANGES
+-------------------------------
+gate_findings() gains its four branches. The expectation file was committed
+HERE, in the RED commit, because it is a statement of the INTENDED verdict: with
+it absent the anti-rot test would have failed by naming a path rather than by
+comparing a stubbed verdict against the pinned one, and that failure would have
+been a false RED. an earlier plan hit exactly that and recorded it.

@@ -1,0 +1,11 @@
+{
+  "check_id": "CHECK-09",
+  "checked": 2,
+  "code": 1,
+  "finding_ids": [
+    "claim:no-counterpart:README.md#example-alpha:P2-B3",
+    "claim:verdict:README.md#PARTIALLY-SUPPORTS"
+  ],
+  "found": 2,
+  "schema_version": "canonkit/1"
+}

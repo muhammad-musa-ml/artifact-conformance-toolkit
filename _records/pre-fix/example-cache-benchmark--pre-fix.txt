@@ -1,0 +1,34 @@
+PRE-FIX CONFORMANCE CAPTURE -- example-cache-benchmark
+
+HEAD=d8a3533a9596f55b525ae925665cb353e3e5cfc2
+CAPTURED_AT_LOCAL=2026-09-17 05:00:39
+CAPTURED_AT_UTC=2026-09-17T10:00:39Z
+ARTIFACT=/path/to/example-cache-benchmark
+COMMAND=python tools/conformance.py <artifact> --report _records/pre-fix/example-cache-benchmark--pre-fix.json
+EXIT=1
+
+NON_PASSING_CHECKS=11
+  (measured, not a threshold; a success criterion's floor is 5)
+  FAIL         4: CHECK-05, CHECK-07, CHECK-08, CHECK-20
+  DID-NOT-RUN  7: CHECK-01, CHECK-02, CHECK-03, CHECK-04, CHECK-06, CHECK-09, CHECK-10
+  PASS         1: CHECK-11
+
+WHY THIS FILE IS COMMITTED: once a range of project requirements land, this
+failing state cannot be re-observed. See _records/pre-fix/README.md.
+
+------------------------------------------------------------------------
+checks found 10 of 10 declared
+CHECK-01         DID-NOT-RUN found=0 checked=0 of 0 not-examined=0 floor=1 waived=0  there is no results/figures.json under \home\user\Research\example-cache-benchmark, so there are zero figures to examine. REPAIR: run derive.py before the checker.
+CHECK-02         DID-NOT-RUN found=0 checked=0 of 99 not-examined=99 floor=1 waived=0  no results file under example-cache-benchmark/results carries a machine-emitted started_at, so there is no machine side to compare a README date against. A date that agrees with nothing is not a date that agrees. REPAIR: run the measurement through runmeta.start_run, which stamps started_at and started_at_utc.
+CHECK-03         DID-NOT-RUN found=0 checked=0 of 0 not-examined=0 floor=1 waived=0  README.md carries no artifact: region of any kind, so this is not a document this check addresses. A finding about a paragraph that was never read is not a finding. REPAIR: generate the artifact from the skeleton, which ships the paired regions.
+CHECK-04         DID-NOT-RUN found=0 checked=0 of 99 not-examined=99 floor=1 waived=0  no results file under example-cache-benchmark/results records a started_at, so there is no measurement for a gate to have preceded. An ordering claim over nothing is not an ordering claim. REPAIR: run the measurement through runmeta.start_run, which stamps started_at and the gate token.
+CHECK-05         FAIL        found=13 checked=12 of 14 not-examined=2 floor=1 waived=0  expected 12, found 1 | built 2 of 14, pending 12, rows 1 of 12 | excluded: 2 (reasons recorded) | artifacts-root=/path/to slugs-probed=14
+CHECK-06         DID-NOT-RUN found=0 checked=0 of 99 not-examined=99 floor=1 waived=0  no results file under example-cache-benchmark/results carries a figure or a measurement, so there is nothing here that needs a run record behind it. REPAIR: run the measurement through runmeta.start_run and finish_run, which write the record this check looks for.
+CHECK-07         FAIL        found=1 checked=100 of 100 not-examined=0 floor=1 waived=0  work-tree=NO commits=0 results-on-disk=100 | tracked-ness not-evaluated (the artifact is not a work tree of its own, so `git ls-files` here would answer about another repository's index rather than this artifact's)
+CHECK-08         FAIL        found=1 checked=3 of 6 not-examined=3 floor=1 waived=0  pull-sites checked 2 file(s), provenance entries not-examined 3 | references=3 (specifiers=0 images=3 text=0) | requirements=0 compose=1 dockerfile=1 drivers=excluded | dirs visited=4 pruned=2 (0 broken-*)
+CHECK-09         DID-NOT-RUN found=0 checked=0 of 0 not-examined=0 floor=1 waived=0  no claim table names a bullet id and no figure carries a canon_bullet, so there are ZERO bullet references to examine. A check over zero references cannot fail, so it must not be allowed to report success. REPAIR: fill in the claim-under-test block from the skeleton.
+CHECK-20         FAIL        found=1 checked=1 of 2 not-examined=1 floor=1 waived=0  built slugs 2, of which 1 under obligation | obligations 1 | live-store=/path/to/information records=/path/to/toolkit/_records/corrections | 1 built slug(s) map to no claim: example-search-benchmark
+CHECK-10         DID-NOT-RUN found=0 checked=0 of 0 not-examined=0 floor=1 waived=0  sources=0 working=0 committed=0 honoured=0 uncommitted=0 malformed=0 (no committed copy resolved)
+CHECK-11         PASS        found=0 checked=11 of 11 not-examined=0 floor=1 waived=0  inspected=11 population-absent=0 pass-over-zero=0 banned-verdict=0 verdict-code-mismatch=0 (this check is not its own witness)
+checks: 1 pass, 4 finding, 7 did-not-run, 0 guard-fail, 0 waived
+guard GUARD-BANNED-SPELLING   PASS        the banned results-record spelling (the banned-spelling rule) is absent

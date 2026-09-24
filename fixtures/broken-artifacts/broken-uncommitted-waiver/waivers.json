@@ -1,0 +1,15 @@
+{
+  "schema": "canonkit/waivers/1",
+  "schema_version": "canonkit/1",
+  "rule": "OWNER-AUTHORED ONLY. A waiver present in a run's output that was not in the last committed version of this file is ITSELF A FINDING, not a silenced check. Build agents run unattended, and a checker that the thing being checked can silence is not a checker.",
+  "entry_shape": "Each element of waivers[] is {check_id, reason, dated_at}. All three are required. reason is prose a reader can disagree with -- not a ticket id, not 'known issue'. dated_at is ISO-8601 with a real offset.",
+  "fixture_note": "THE ENTRY BELOW IS THE COMMITTED HALF OF THE ROUND TRIP, and it is committed on purpose. The defect this fixture carries cannot itself be committed: a waiver that is uncommitted stops being uncommitted the moment it enters the index. So the committed shape is a VALID waiver, and the test copies this tree, commits the copy, and then adds a SECOND waiver to the working copy only. What is committed here is the baseline the checker compares against; what the test adds is the defect.",
+  "waivers": [
+    {
+      "check_id": "CHECK-01",
+      "finding_id": "figure:cache_hit_ratio",
+      "reason": "This fixture exists to exercise the waiver round trip and carries no measurement at all, so the figure it names has no denominator and never will. The waiver is here so a run over this tree has a honoured waiver to count.",
+      "dated_at": "2026-09-15T00:00:00+03:00"
+    }
+  ]
+}

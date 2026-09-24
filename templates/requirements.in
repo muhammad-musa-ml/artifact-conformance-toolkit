@@ -1,0 +1,26 @@
+# The MINIMAL pinned base every artifact starts from. Add this path's own
+# dependencies below, one per line, each pinned with `==`.
+#
+# COMPILE IT, NEVER HAND-EDIT requirements.txt:
+#
+#     uv pip compile requirements.in --generate-hashes --python-version 3.12 \
+#         -o requirements.txt
+#
+# THE `--generate-hashes` FLAG IS NOT OPTIONAL. Install with
+# `--require-hashes`, which refuses the ENTIRE install if a single hash is
+# missing. Transitive pins are the part a human gets wrong, and a lock whose
+# hashes are partly hand-maintained fails open on exactly the package nobody
+# checked.
+#
+# NO RANGE SPECIFIER OF ANY KIND, HERE OR IN THE COMPILED OUTPUT. Not `>=`, not
+# `,<`, not `~=`, not `!=`. This is a real committed defect elsewhere, not a
+# hypothetical: a shipped artifact in this program carries `elasticsearch>=8,<9`
+# in its requirements, which is why that file is now a known-bad fixture rather
+# than a model. A range means two people running the same command on different
+# days measure different software and report it as the same benchmark.
+#
+# The artifact run chain itself -- gate, derive, render, verify, provenance,
+# finalize, and the vendored core -- is deliberately dependency-free standard
+# library, so it keeps working after any resolution here. pytest is the only
+# base requirement.
+pytest==9.1.1

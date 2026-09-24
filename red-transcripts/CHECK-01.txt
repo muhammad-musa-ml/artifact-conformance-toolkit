@@ -1,0 +1,315 @@
+CHECK-01 -- THE RED TRANSCRIPT
+===========================================
+
+What this file is, and what would make it worthless.
+
+a design rule requires a committed RED transcript per checker, captured BEFORE the
+implementation commit, with commit order as the evidence. The trap in that
+requirement -- the research note names it as Pitfall 2 -- is that "before the
+implementation" reads as "before any code exists", and a transcript captured
+then records a missing module or an absent input. Each of those exits non-zero,
+each satisfies a naive "non-zero exit" acceptance test, and none of them says
+anything about whether the check DISCRIMINATES.
+
+So tools/checks/check_01.py was REGISTERED AND RUNNABLE when this was captured,
+with its detection logic stubbed to return a passing verdict over whatever it
+read. Every failure line below is therefore an assertion about the VERDICT --
+`assert 0 != 0`, `assert 0 == 1` -- produced by a check that really ran, over
+inputs that really exist. The stub's own population line is quoted inside each
+assertion message, so a reader can see what the check concluded and what the
+test expected, side by side.
+
+The two committed one-known-bad fixtures it ran against:
+
+  fixtures/broken-artifacts/broken-figure-without-population/
+      a figures.json entry carrying a population_label and no population
+  fixtures/broken-artifacts/broken-figure-in-prose/
+      a figure VALUE typed into un-rendered prose, in a shape the allow-list
+      PERMITS -- the shape rule classifies it as a port and says nothing, so
+      only the value check can catch it
+
+The zero-input fixture is built in tmp_path by conftest.tmp_artifact with its
+figures block empty: a check over zero figures must report DID-NOT-RUN, never
+PASS.
+
+REVIEW CRITERION FOR THIS FILE, stated so it can be checked rather than assumed:
+the failure lines below must name ASSERTIONS ON THE VERDICT. A transcript whose
+failure line instead names a failed module load, a collection failure, an absent
+input, or an argument parser rejecting a flag is a FALSE RED and must be
+rejected and recaptured. That is mechanically checkable with a case-insensitive
+grep for those five shapes, and the plan states the pattern.
+
+THE PATTERN IS DELIBERATELY NOT PASTED HERE. A transcript that quoted its own
+needle set would match that grep against its own prose and fail the gate it
+exists to satisfy -- and the natural repair for that, excluding this file from
+the sweep, would put a hole exactly where the guard is supposed to be. Plan
+an earlier plan measured what the same mistake costs: a text predicate that matched the
+FILENAME it was written to protect produced 26 confident false findings. The
+pattern lives in the plan's acceptance criteria and in the research note's Pitfall 2
+warning-sign list. It returned 0 against this file when this was captured, and
+against the raw pytest output before it was framed.
+
+CAPTURED
+--------
+  command      .venv/Scripts/python.exe -m pytest tools/tests/test_check_01.py -q
+  cwd          <repo root>
+  interpreter  CPython 3.12.11, pytest 9.1.1
+  parent HEAD  648de45c28b46edfc2439d0c8ce537254d6239ba
+  redirection  > .reports/p0107-t2.txt 2>&1   (never a pipe: a command piped
+               into tail returns the PIPE's exit status, not the command's)
+
+VERBATIM OUTPUT
+---------------
+FFFF.FFFF....                                                            [100%]
+================================== FAILURES ===================================
+______________ test_zero_figures_is_did_not_run_and_never_a_pass ______________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5852/test_zero_figures_is_did_not_r0')
+
+    def test_zero_figures_is_did_not_run_and_never_a_pass(tmp_path):
+        """all() over an empty sequence is True. That is how a filter which removed
+        everything reports every figure passing."""
+        empty = _record()
+        empty["figures"] = {}
+        artifact = conftest.tmp_artifact(
+            tmp_path, readme=_CLEAN_README, figures=empty, slug="zero-input")
+        report_path = tmp_path / "zero-input.json"
+    
+        result = _run(artifact, report=report_path)
+    
+>       assert result.exit_code != 0, (
+            "a check over zero figures reported a PASS. stdout:\n%s" % result.stdout)
+E       AssertionError: a check over zero figures reported a PASS. stdout:
+E         CHECK-01         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  unclassified=0 leaks=0 unpopulated=0 documents=0 of 2 (STUB: detection logic not implemented)
+E         
+E       assert 0 != 0
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-01         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  unclass...est-5852/test_zero_figures_is_did_not_r0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-qno5emov')).exit_code
+
+tools\tests\test_check_01.py:172: AssertionError
+________________ test_an_absent_figures_record_is_did_not_run _________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5852/test_an_absent_figures_record_0')
+
+    def test_an_absent_figures_record_is_did_not_run(tmp_path):
+        """An artifact that never produced a record is a DID-NOT-RUN, not a pass."""
+        artifact = conftest.tmp_artifact(
+            tmp_path, readme=_CLEAN_README, figures=None, slug="record-absent")
+        report_path = tmp_path / "record-absent.json"
+    
+        result = _run(artifact, report=report_path)
+    
+>       assert result.exit_code == 2, (
+            "an artifact whose figures record was never written reported exit %d\n%s"
+            % (result.exit_code, result.stdout))
+E       AssertionError: an artifact whose figures record was never written reported exit 0
+E         CHECK-01         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  unclassified=0 leaks=0 unpopulated=0 documents=0 of 2 (STUB: detection logic not implemented)
+E         
+E       assert 0 == 2
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-01         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  unclass...est-5852/test_an_absent_figures_record_0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-jh2n4fnh')).exit_code
+
+tools\tests\test_check_01.py:193: AssertionError
+______ test_a_figure_without_its_population_is_a_finding_naming_the_key _______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5852/test_a_figure_without_its_popu0')
+
+    def test_a_figure_without_its_population_is_a_finding_naming_the_key(tmp_path):
+        """a success criterion's detection half. The KEY is named -- a bare verdict makes the
+        operator search, and CHECK-01's own wording forbids a bare verdict."""
+        artifact = conftest.broken_fixture(WITHOUT_POPULATION)
+        report_path = tmp_path / "without-population.json"
+    
+        result = _run(artifact, report=report_path)
+    
+>       assert result.exit_code == 1, (
+            "a figure carrying no denominator was not reported as a finding. "
+            "exit=%d\n%s\n%s" % (result.exit_code, result.stdout, result.stderr))
+E       AssertionError: a figure carrying no denominator was not reported as a finding. exit=0
+E         CHECK-01         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  unclassified=0 leaks=0 unpopulated=0 documents=0 of 2 (STUB: detection logic not implemented)
+E         
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-01         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  unclass...backing-builds/fixtures/broken-artifacts'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-e2vohxuf')).exit_code
+
+tools\tests\test_check_01.py:214: AssertionError
+__________ test_a_figure_value_in_prose_is_caught_by_the_value_rule ___________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5852/test_a_figure_value_in_prose_i0')
+
+    def test_a_figure_value_in_prose_is_caught_by_the_value_rule(tmp_path):
+        """the design rules: the case a shape allow-list cannot see.
+    
+        The leaked value classifies as a PORT, so the shape rule reports this
+        document clean and only the value check fires. This is an earlier finding's back-solving
+        failure in fixture form.
+        """
+        artifact = conftest.broken_fixture(IN_PROSE)
+        report_path = tmp_path / "in-prose.json"
+    
+        result = _run(artifact, report=report_path)
+    
+>       assert result.exit_code == 1, (
+            "a figure value typed into un-rendered prose was not reported. "
+            "exit=%d\n%s\n%s" % (result.exit_code, result.stdout, result.stderr))
+E       AssertionError: a figure value typed into un-rendered prose was not reported. exit=0
+E         CHECK-01         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  unclassified=0 leaks=0 unpopulated=0 documents=0 of 2 (STUB: detection logic not implemented)
+E         
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-01         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  unclass...backing-builds/fixtures/broken-artifacts'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-ugh97he_')).exit_code
+
+tools\tests\test_check_01.py:243: AssertionError
+__________________ test_a_correctly_rendered_artifact_passes __________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5852/test_a_correctly_rendered_arti0')
+
+    def test_a_correctly_rendered_artifact_passes(tmp_path):
+        """Rendered with the real render.py, then checked. Without this test the
+        findings above are equally consistent with a check that fails everything.
+    
+        It renders through the tool rather than hand-writing the rendered form, so
+        the mask this check applies is pinned to what render.py actually writes.
+        """
+        artifact = _artifact(tmp_path)
+        written = _run_render(artifact, "--write")
+        assert written.exit_code == 0, written.stderr
+        rendered = (artifact / "README.md").read_text(encoding="utf-8")
+        assert "12.5" in rendered, rendered
+    
+        report_path = tmp_path / "clean.json"
+        result = _run(artifact, report=report_path)
+        assert result.exit_code == 0, (
+            "a correctly rendered artifact was reported as a finding:\n%s\n%s"
+            % (result.stdout, result.stderr))
+        assert result.report["found"] == 0, result.report
+>       assert result.report["rendered_holes"] >= 1, (
+            "no rendered hole was seen, so the mask was never exercised: %r"
+            % result.report)
+E       AssertionError: no rendered hole was seen, so the mask was never exercised: {'artifact': '\\home\\user\\AppData\\Local\\Temp\\pytest-of-user\\pytest-5852\\test_a_correctly_rendered_arti0\\demo-artifact', 'check_id': 'CHECK-01', 'checked': 1, 'code': 0, 'documents_declared': 2, 'documents_scanned': 0, 'finding_ids': [], 'findings': [], 'floor': 1, 'found': 0, 'listed': 1, 'note': 'unclassified=0 leaks=0 unpopulated=0 documents=0 of 2 (STUB: detection logic not implemented)', 'reclassified': {'artifact_slug': 0, 'ordered_list_marker': 0}, 'rendered_holes': 0, 'schema': 'canonkit/check-01/1', 'schema_version': 'canonkit/1', 'skipped': 0, 'unclassified': 0, 'unpopulated_figures': 0, 'value_leaks': 0, 'waived': 0}
+E       assert 0 >= 1
+
+tools\tests\test_check_01.py:302: AssertionError
+________________ test_an_ordered_list_marker_is_not_a_finding _________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5852/test_an_ordered_list_marker_is0')
+
+    def test_an_ordered_list_marker_is_not_a_finding(tmp_path):
+        """G-1. A checker that raises against the first author who writes a numbered
+        list is a checker people learn to ignore."""
+        readme = (
+            "# demo-artifact\n"
+            "\n"
+            "<!-- artifact:figures:begin -->\n"
+            "The median was {{figures.median_latency_ms}} ms.\n"
+            "<!-- artifact:figures:end -->\n"
+            "\n"
+            "## Steps\n"
+            "\n"
+            "1. Start the service.\n"
+            "2. Replay the corpus.\n"
+            "10) Read the report.\n"
+            "\n"
+            "Dated: 2026-09-15\n"
+        )
+        artifact = _artifact(tmp_path, readme=readme)
+        assert _run_render(artifact, "--write").exit_code == 0
+    
+        report_path = tmp_path / "ordered-list.json"
+        result = _run(artifact, report=report_path)
+        assert result.exit_code == 0, (
+            "an ordered list was reported as unclassified numerals:\n%s"
+            % result.stdout)
+        assert result.report["unclassified"] == 0, result.report
+>       assert result.report["reclassified"]["ordered_list_marker"] == 3, (
+            "expected three re-classified list markers, got %r"
+            % (result.report["reclassified"],))
+E       AssertionError: expected three re-classified list markers, got {'artifact_slug': 0, 'ordered_list_marker': 0}
+E       assert 0 == 3
+
+tools\tests\test_check_01.py:334: AssertionError
+________________ test_a_slug_carrying_a_digit_is_not_a_finding ________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5852/test_a_slug_carrying_a_digit_i0')
+
+    def test_a_slug_carrying_a_digit_is_not_a_finding(tmp_path):
+        """G-2. The example-beta canon numbers its example projects, so an artifact slug
+        carrying a digit is certain rather than hypothetical."""
+        slug = "bp2-platform"
+        readme = (
+            "# bp2-platform\n"
+            "\n"
+            "Generated under Research/bp2-platform, which is where its results live.\n"
+            "\n"
+            "<!-- artifact:figures:begin -->\n"
+            "The median was {{figures.median_latency_ms}} ms.\n"
+            "<!-- artifact:figures:end -->\n"
+            "\n"
+            "Dated: 2026-09-15\n"
+        )
+        artifact = _artifact(tmp_path, readme=readme,
+                             record=_record(slug=slug), slug=slug)
+        assert _run_render(artifact, "--write").exit_code == 0
+    
+        report_path = tmp_path / "slug.json"
+        result = _run(artifact, report=report_path)
+        assert result.exit_code == 0, (
+            "an artifact slug carrying a digit was reported as a finding:\n%s"
+            % result.stdout)
+        assert result.report["unclassified"] == 0, result.report
+>       assert result.report["reclassified"]["artifact_slug"] == 2, (
+            "expected two re-classified slug tokens, got %r"
+            % (result.report["reclassified"],))
+E       AssertionError: expected two re-classified slug tokens, got {'artifact_slug': 0, 'ordered_list_marker': 0}
+E       assert 0 == 2
+
+tools\tests\test_check_01.py:364: AssertionError
+____________ test_a_hand_typed_numeral_in_prose_is_still_a_finding ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5852/test_a_hand_typed_numeral_in_p0')
+
+    def test_a_hand_typed_numeral_in_prose_is_still_a_finding(tmp_path):
+        """The other half of G-1 and G-2: closing two false positives must not open
+        a hole. A numeral that is neither a list marker nor the slug still fires."""
+        readme = (
+            "# demo-artifact\n"
+            "\n"
+            "<!-- artifact:figures:begin -->\n"
+            "The median was {{figures.median_latency_ms}} ms.\n"
+            "<!-- artifact:figures:end -->\n"
+            "\n"
+            "The service held 87 connections open for the whole window.\n"
+            "\n"
+            "Dated: 2026-09-15\n"
+        )
+        artifact = _artifact(tmp_path, readme=readme)
+        assert _run_render(artifact, "--write").exit_code == 0
+    
+        report_path = tmp_path / "hand-typed.json"
+        result = _run(artifact, report=report_path)
+>       assert result.exit_code == 1, (
+            "a hand-typed numeral in un-rendered prose was not reported:\n%s"
+            % result.stdout)
+E       AssertionError: a hand-typed numeral in un-rendered prose was not reported:
+E         CHECK-01         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  unclassified=0 leaks=0 unpopulated=0 documents=0 of 2 (STUB: detection logic not implemented)
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-01         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  unclass...est-5852/test_a_hand_typed_numeral_in_p0'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-tj687v1x')).exit_code
+
+tools\tests\test_check_01.py:388: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_check_01.py::test_zero_figures_is_did_not_run_and_never_a_pass
+FAILED tools/tests/test_check_01.py::test_an_absent_figures_record_is_did_not_run
+FAILED tools/tests/test_check_01.py::test_a_figure_without_its_population_is_a_finding_naming_the_key
+FAILED tools/tests/test_check_01.py::test_a_figure_value_in_prose_is_caught_by_the_value_rule
+FAILED tools/tests/test_check_01.py::test_a_correctly_rendered_artifact_passes
+FAILED tools/tests/test_check_01.py::test_an_ordered_list_marker_is_not_a_finding
+FAILED tools/tests/test_check_01.py::test_a_slug_carrying_a_digit_is_not_a_finding
+FAILED tools/tests/test_check_01.py::test_a_hand_typed_numeral_in_prose_is_still_a_finding
+8 failed, 5 passed in 2.69s
+
+EXIT=1
+
+The exit code above is the pytest process's own, read from $? immediately after
+the redirection. 8 failed, 5 passed: the five passes are the tests a blind check
+satisfies honestly (the module protocol, the fixture-tree containment, the
+population line's shape and the floor override), and they are here so the
+failures are not the only thing this run proves.

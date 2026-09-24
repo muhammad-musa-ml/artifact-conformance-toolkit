@@ -1,0 +1,8 @@
+{
+  "item_id": "item-0002",
+  "latency_ms": 13.0,
+  "ok": true,
+  "schema": "canonkit/run-record/1",
+  "schema_version": "canonkit/1",
+  "started_at_utc": "2026-09-15T04:00:00Z"
+}

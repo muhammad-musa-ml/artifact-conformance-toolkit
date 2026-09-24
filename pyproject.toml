@@ -1,0 +1,117 @@
+# Packaging and test configuration for the repo-side `tools` package.
+#
+# Two populations live under tools/ and the split is load-bearing:
+#
+#   THE VENDORED SET  -- run BY PATH, copied BY BYTES, never imported from the
+#                        package: tools/canonkit.py, tools/conformance.py,
+#                        tools/render.py, tools/checks/**
+#   THE PACKAGE       -- importable repo-side modules, each carrying a unit test
+#
+#
+# a design rule's reason, verbatim: making the frozen core a package module "invites
+# importing it here while artifacts import their vendored copy, and those two
+# then drift in the one file whose purpose is preventing drift."
+
+[build-system]
+# Pinned EXACTLY rather than floored. CHECK-08 requires pins at pull sites, and a
+# build-system requirement is a pull site like any other -- `setuptools>=68`
+# would be a CHECK-08 finding earlier against this repository's own tree
+# (a design rule applies CHECK-08 to this repo). 82.0.0 is the version measured present
+# on this machine, not a version looked up from memory.
+requires = ["setuptools==82.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "artifact-conformance-toolkit"
+version = "0.1.0"
+description = "Repo-side tooling for the artifact-conformance-toolkit program"
+readme = "README.md"
+# STACK's binding intersection across the whole program is 3.11-3.13. a design rule
+# targets 3.12 and the host interpreter here is 3.13.5, so BOTH must resolve --
+# hence a floor of 3.12 and a ceiling below 3.14 rather than a single version.
+requires-python = ">=3.12,<3.14"
+dependencies = []
+
+# CONSOLE ENTRY POINTS. ONE LINE PER TOOL, ADDED BY THE PLAN THAT CREATES
+# THE TOOL -- never declared ahead of the module, because an entry point naming a
+# module that does not exist makes `pip install -e .` fail at import time on the
+# first invocation. That is why an earlier round shipped no block at all.
+#
+# Still to come, each owned by the plan named beside it:
+# tools/census_live_store.py, tools/canon_snapshot.py and
+# tools/check_canon_backing.py, tools/build_register.py and
+# tools/assemble_records.py, tools/mutate.py, tools/mwlock.py and
+# tools/lint_banned_names.py.
+#
+# WHAT WAS VERIFIED AND WHAT WAS NOT, stated rather than implied. Verified: this
+# file parses as TOML, and `tools.vendor:main` resolves to a callable that
+# accepts an argv list and returns an exit code. NOT verified: the install
+# itself. `pip` is absent from `.venv` and `uv pip install --system` is denied on
+# this machine (see .gitignore), and installing an unhashed build backend would
+# break a design rule's --require-hashes discipline for this repository. The tool runs
+# today as `python -m tools.vendor`.
+[project.scripts]
+canonkit-vendor = "tools.vendor:main"
+# an earlier plan open item 5, closed by an earlier plan under a design rule. The generator was created
+# by an earlier plan and never got its line, only because pyproject.toml sat outside
+# that plan's authorised file set -- an unfinished job with a name on it rather
+# than a decision.
+#
+# It matters more than an ergonomic shortcut. the project technology-stack document section 3 records that
+# `python tools/new_artifact.py` dies with ModuleNotFoundError while
+# `python -m tools.new_artifact` works, because running a file by path puts the
+# file's OWN directory on sys.path instead of the repository root. A console
+# entry point resolves the module the same way `-m` does, so it removes the
+# invocation that fails rather than documenting it.
+#
+# The same limit as the line above applies and is stated rather than implied:
+# verified that this file parses as TOML and that `tools.new_artifact:main`
+# resolves to a callable taking an argv list; NOT verified is the install
+# itself, because pip is absent from .venv and installing an unhashed build
+# backend would break a design rule's --require-hashes discipline.
+new-artifact = "tools.new_artifact:main"
+
+[tool.setuptools]
+# ENUMERATED, never globbed. `packages = ["tools"]` names one package and one
+# only, which is what keeps `tools.checks` (the vendored check package) and
+# `tools.tests` out of any built distribution. A find-directive with a `tools*`
+# pattern would sweep both back in the moment they exist.
+packages = ["tools"]
+include-package-data = false
+
+# THE LIMIT OF WHAT PACKAGING CAN ENFORCE HERE, STATED RATHER THAN IMPLIED.
+# tools/canonkit.py, tools/conformance.py and tools/render.py are MODULES inside
+# the `tools` package directory, and setuptools has no per-module exclusion: any
+# file sitting beside __init__.py ships with the package, and in a source
+# checkout `import tools.<name>` resolves regardless of what this file says.
+# Excluding them here is therefore not possible, and pretending otherwise would
+# be a check that cannot discriminate. That is exactly why a design rule says the split is
+# enforced by a TEST rather than by a convention:
+# tools/tests/test_repo_hygiene.py::test_frozen_core_is_never_imported scans
+# every repo-side module for a reference to the vendored set and fails on the
+# first one. It has been demonstrated failing, not merely asserted to work.
+
+[tool.pytest.ini_options]
+testpaths = ["tools/tests"]
+
+# `addopts = "-q"` IS DELIBERATELY ABSENT, THOUGH AN EARLIER PLAN NAMED IT.
+# MEASURED on this machine, not reasoned about. pytest's -q is a verbosity
+# DECREMENT, so it stacks. The validation note's standing run commands are
+# `python -m pytest tools/tests -q` and `... -x -q`, and every later an earlier round plan
+# uses them. With -q also in addopts the effective verbosity is -2, and at -2
+# pytest prints the progress dots and NOTHING ELSE:
+#
+#   addopts="-q" + CLI -q   ->  `......                          [100%]`
+#   addopts absent + CLI -q ->  `......   [100%]` and `6 passed in 0.27s`
+#
+# The first form is a gate that reports its verdict with NO POPULATION. A run
+# that says nothing about how many tests it collected cannot be distinguished
+# from a run that collected none, and `0 passed` would render identically -- the
+# 0/0 pass, arriving through the config file. That would have been seeded at wave
+# 2 into all sixteen later phases. The quiet flag stays on the COMMAND LINE,
+# where the plan's own verify commands already put it, and the count survives.
+#
+# NO WATCH-MODE FLAG OF ANY KIND. The validation note forbids watch mode: a suite
+# that re-runs itself on save produces output nobody redirected and nobody read,
+# and this phase's whole discipline is `cmd > out 2>&1; echo "EXIT=$?"` followed
+# by reading the file.

@@ -1,0 +1,11 @@
+{
+  "check_id": "CHECK-08",
+  "checked": 2,
+  "code": 1,
+  "finding_ids": [
+    "pins:image-without-digest:docker-compose.yml:10",
+    "pins:latest-tag:docker-compose.yml:15"
+  ],
+  "found": 2,
+  "schema_version": "canonkit/1"
+}

@@ -1,0 +1,276 @@
+CHECK-11 -- THE RED TRANSCRIPT
+===========================================
+
+CHECK-11 is a property of the RUNNER rather than a module under tools/checks/,
+and that is exactly why this file exists.
+
+Every other checker in this phase is a tools/checks/check_NN.py with a matching
+red-transcripts/CHECK-NN.txt, and an earlier plan's audit derives its population from
+those two globs. A runner property matches NEITHER glob. Without this file and
+its sibling for CHECK-10, "every checker has already FAILED on a real defect"
+would read as satisfied over nine of eleven -- a verifying population that
+excludes precisely the two cases it was written to cover. So the two runner
+properties get the same RED-first evidence as the nine modules, captured the
+same way, held to the same standard.
+
+Their implementation module is tools/conformance.py, not a check_NN.py. That is
+the mapping through which an audit resolves them, and the report's own checks[]
+rows carry `"source": "runner:conformance.py"` so the mapping is readable from
+the artifact rather than only from this paragraph.
+
+WHAT CHECK-11 REQUIRES, verbatim from the project requirements document:
+
+    The checker prints its own population for every check it runs, and a check
+    that ran over zero inputs is reported as FAIL -- never as PASS, and never as
+    the banned verdict word.
+
+WHAT MAKES THIS A REAL RED RATHER THAN A MISSING FILE
+------------------------------------------------------
+a design rule requires the transcript to be captured BEFORE the implementation commit,
+with commit order as the evidence. The trap in that requirement -- the research note
+names it as Pitfall 2 -- is that "before the implementation" reads as "before any
+code exists", and a transcript captured then records a module that could not be
+loaded or an input that was not there. Each of those exits non-zero, each
+satisfies a naive "non-zero exit" acceptance test, and none of them says anything
+about whether the check DISCRIMINATES.
+
+So tools/conformance.py was REGISTERED AND RUNNABLE when this was captured. It
+discovered the check package, ran every module that exists at this wave, printed
+a population line for each, built both runner rows, aggregated the codes and
+wrote the structured report. Three named stub points carried the CHECK-11
+property, and nothing else was stubbed:
+
+    normalize_zero_population()   a check that examined zero inputs is reported
+                                  with code 0 -- the 0/0 pass in its purest form
+    scan_over_zero_artifacts()    a scan that enumerated nothing returns 0 and
+                                  prints `checked 0 of 0`
+    check_11_findings()           the detection returns no finding, whatever the
+                                  records say
+
+Every failure line below is therefore an assertion about a VERDICT -- assert
+0 == 2, assert 0 == 1, a finding id absent from a list a real detector would
+have filled -- produced by a runner that really ran, over inputs that really
+exist. The stub's own population line is quoted inside each assertion message,
+so a reader can see what the runner concluded and what the test expected, side
+by side.
+
+THE LINE WORTH READING TWICE is CHECK-01's in the first failure:
+
+    CHECK-01   DID-NOT-RUN  found=0 checked=0 of 0 ...  (STUB: zero population
+    reported as a pass)
+
+The printed VERDICT already says DID-NOT-RUN, because canonkit.report() puts the
+zero-population branch first and the runner never re-derived it. What the stub
+changed is the CODE beside it, and the artifact-level exit that aggregates from
+it. That is the more dangerous shape of this defect, not a milder one: the log a
+human reads says one thing while the integer a script branches on says another,
+and only the integer travels. It is also why CHECK-11's real detection, landed in
+the GREEN commit, reports `verdict-code-mismatch` as a finding of its own.
+
+WHAT THE THREE MEASURED INSTANCES BEHIND THIS CHECK WERE, in this phase alone:
+a test command whose own count was suppressed printed dots and no number, so a
+verdict carried no population at all; a guard whose vacuity check fired only at
+zero ran over two directories instead of twenty-five and PASSED; and a register
+whose rows carrying a figures record were zero of twelve correctly exited
+DID-NOT-RUN rather than publishing an empty register. A count that is PRESENT but
+WRONG is more dangerous than a missing one, because a wrong number reads as
+detail while a missing one reads as a question.
+
+REVIEW CRITERION FOR THIS FILE, stated so it can be checked rather than assumed:
+the failure lines below must name ASSERTIONS ON THE VERDICT. A transcript whose
+failure line instead names a failed module load, a collection failure, an absent
+input, or an argument parser rejecting a flag is a FALSE RED and must be rejected
+and recaptured. That is mechanically checkable with a case-insensitive grep over
+five shapes, and the plan states the pattern.
+
+THE PATTERN IS DELIBERATELY NOT PASTED HERE. A transcript that quoted its own
+needle set would match that grep against its own prose and fail the gate it
+exists to satisfy -- and the natural repair for that, excluding this file from
+the sweep, would put a hole exactly where the guard is supposed to be. an earlier plan
+measured what the same mistake costs: a text predicate that matched the FILENAME
+it was written to protect produced 26 confident false findings. The pattern lives
+in the plan's acceptance criteria and in the research note's Pitfall 2 warning-sign
+list. It returned 0 against this file when this was captured, and against the raw
+pytest output before it was framed.
+
+CAPTURED
+--------
+  command      .venv/Scripts/python.exe -m pytest tools/tests/test_exit_codes.py -q
+  cwd          <repo root>
+  interpreter  CPython 3.12.11, pytest 9.1.1
+  parent HEAD  cbeaec3bd340d9c6b09c9733c5716502ebbdb5b6
+  redirection  > .reports/p0109-RED-check11.txt 2>&1   (never a pipe: a command
+               piped into another process returns the PIPE's exit status, not
+               the command's)
+
+VERBATIM OUTPUT
+---------------
+FFF..FFFF....                                                            [100%]
+================================== FAILURES ===================================
+___________________ test_zero_population_aggregates_to_one ____________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5867/test_zero_population_aggregate0')
+
+    def test_zero_population_aggregates_to_one(tmp_path):
+        """A check over zero inputs is code 2, the artifact exit is 1, and the
+        did-not-run count is STILL a separate non-zero number afterwards.
+    
+        All three, because the first two alone are satisfied by an implementation
+        that collapses everything to a finding and forgets which checks could not
+        look -- the distinction a design rule exists to preserve.
+        """
+        root = artifact(tmp_path, slug="zero-population")
+        (root / "results" / "figures.json").unlink()
+    
+        result = run_conformance(root, report=tmp_path / "report.json")
+        report = result.report
+        assert report is not None, result.stdout + result.stderr
+    
+        row = entry(report, "CHECK-01")
+        assert row is not None, report["checks"]
+        assert row["checked"] == 0, row
+>       assert row["code"] == core.EXIT_DID_NOT_RUN, (
+            "a check that examined zero inputs reported code %d. Its printed line "
+            "was:\n%s" % (row["code"], result.stdout))
+E       AssertionError: a check that examined zero inputs reported code 0. Its printed line was:
+E         checks found 1 of 9 declared
+E           (not yet landed: 8 -- CHECK-02, CHECK-03, CHECK-04, CHECK-05, CHECK-06, CHECK-07, CHECK-08, CHECK-09)
+E         CHECK-01         DID-NOT-RUN found=0 checked=0 of 0 not-examined=0 floor=1 waived=0  there is no results/figures.json under \home\user\AppData\Local\Temp\pytest-of-user\pytest-5867\test_zero_population_aggregate0\zero-population, so there are zero figures to examine. REPAIR: run derive.py before the checker. (STUB: zero population reported as a pass)
+E         CHECK-10         PASS        found=0 checked=1 of 1 not-examined=0 floor=1 waived=0  sources=1 working=0 committed=0 honoured=0 uncommitted=0 malformed=0 (no committed copy resolved)
+E         CHECK-11         PASS        found=0 checked=2 of 2 not-examined=0 floor=1 waived=0  inspected=2 population-absent=0 pass-over-zero=0 banned-verdict=0 verdict-code-mismatch=0 (this check is not its own witness)
+E         checks: 3 pass, 0 finding, 0 did-not-run, 0 guard-fail, 0 waived
+E         guard GUARD-BANNED-SPELLING   PASS        the banned results-record spelling (the banned-spelling rule) is absent
+E         
+E       assert 0 == 2
+E        +  where 2 = core.EXIT_DID_NOT_RUN
+
+tools\tests\test_exit_codes.py:77: AssertionError
+_____________________ test_zero_artifacts_is_did_not_run ______________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5867/test_zero_artifacts_is_did_not0')
+
+    def test_zero_artifacts_is_did_not_run(tmp_path):
+        """A scan that enumerated nothing is not a scan that found everything clean."""
+        empty = tmp_path / "empty-scan-root"
+        empty.mkdir()
+        manifest = synthetic_manifest(tmp_path / "manifest.json", [])
+    
+        result = run_scan(empty, manifest=manifest, report=tmp_path / "report.json")
+>       assert result.exit_code == core.EXIT_DID_NOT_RUN, (
+            "a scan over zero artifacts exited %d.\n%s"
+            % (result.exit_code, result.stdout))
+E       AssertionError: a scan over zero artifacts exited 0.
+E         checks found 1 of 9 declared
+E           (not yet landed: 8 -- CHECK-02, CHECK-03, CHECK-04, CHECK-05, CHECK-06, CHECK-07, CHECK-08, CHECK-09)
+E         scan root      /home/user/AppData/Local/Temp/pytest-of-user/pytest-5867/test_zero_artifacts_is_did_not0/empty-scan-root
+E         enumerated     0 directory(ies) at depth 1; 0 artifact-shaped, 0 unrelated
+E         expected set   listed=0 expected=0 checked=0 waived=0 extras=0 missing=0 pending=0 stale-pending=0
+E         identity       checked + waived + extras + missing == expected: closes
+E         closeout       pending=0 (a project requirement closes when this reaches 0)
+E         SCAN             DID-NOT-RUN found=0 checked=0 of 0 not-examined=0 floor=1 waived=0  (STUB: an empty scan reported as a pass)
+E         
+E       assert 0 == 2
+E        +  where 0 = CliResult(exit_code=0, stdout='checks found 1 of 9 declared\n  (not yet landed: 8 -- CHECK-02, CHECK-03, CHECK-04, CHE...sers/user/projects/artifact-conformance-toolkit'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-8i6d3764')).exit_code
+E        +  and   2 = core.EXIT_DID_NOT_RUN
+
+tools\tests\test_exit_codes.py:98: AssertionError
+________ test_the_did_not_run_count_is_separate_from_the_finding_count ________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5867/test_the_did_not_run_count_is_0')
+
+    def test_the_did_not_run_count_is_separate_from_the_finding_count(tmp_path):
+        """Two checks, two different reasons, two different numbers."""
+        root = artifact(tmp_path, population=None, slug="mixed")
+        (root / "waivers.json").unlink()      # CHECK-10 then has nothing to resolve
+    
+        result = run_conformance(root, report=tmp_path / "report.json")
+        summary = result.report["summary"]
+        assert summary["finding"] >= 1, summary
+>       assert summary["did_not_run"] >= 1, summary
+E       AssertionError: {'checked_artifacts': 1, 'did_not_run': 0, 'expected_artifacts': 1, 'extras': 0, ...}
+E       assert 0 >= 1
+
+tools\tests\test_exit_codes.py:113: AssertionError
+________________ test_check_11_detects_a_pass_over_zero_inputs ________________
+
+    def test_check_11_detects_a_pass_over_zero_inputs():
+        """The 0/0 pass, named by the check whose whole job is refusing it."""
+        records = [_record("CHECK-02", core.VERDICT_PASS, core.EXIT_PASS, 0)]
+        findings = conformance.check_11_findings(core, records)
+>       assert "pass-over-zero:CHECK-02" in findings, (
+            "a PASS printed over a population of zero was not reported: %r"
+            % (findings,))
+E       AssertionError: a PASS printed over a population of zero was not reported: []
+E       assert 'pass-over-zero:CHECK-02' in []
+
+tools\tests\test_exit_codes.py:156: AssertionError
+_____________ test_check_11_detects_a_line_carrying_no_population _____________
+
+    def test_check_11_detects_a_line_carrying_no_population():
+        """A verdict with no count is an unrun check."""
+        records = [_record("CHECK-04", core.VERDICT_PASS, core.EXIT_PASS, 5,
+                           line="CHECK-04         PASS        (no numbers at all)")]
+        findings = conformance.check_11_findings(core, records)
+>       assert "population-absent:CHECK-04" in findings, (
+            "a printed line carrying no population was not reported: %r" % (findings,))
+E       AssertionError: a printed line carrying no population was not reported: []
+E       assert 'population-absent:CHECK-04' in []
+
+tools\tests\test_exit_codes.py:166: AssertionError
+__________ test_check_11_detects_a_verdict_that_contradicts_its_code __________
+
+    def test_check_11_detects_a_verdict_that_contradicts_its_code():
+        """A line that says one thing while the exit code says another."""
+        records = [_record("CHECK-06", core.VERDICT_DID_NOT_RUN, core.EXIT_PASS, 0)]
+        findings = conformance.check_11_findings(core, records)
+>       assert "verdict-code-mismatch:CHECK-06" in findings, (
+            "a printed verdict that does not map to its own code was not reported: "
+            "%r" % (findings,))
+E       AssertionError: a printed verdict that does not map to its own code was not reported: []
+E       assert 'verdict-code-mismatch:CHECK-06' in []
+
+tools\tests\test_exit_codes.py:174: AssertionError
+________________ test_check_11_detects_the_banned_verdict_word ________________
+
+    def test_check_11_detects_the_banned_verdict_word():
+        records = [_record("CHECK-08", core.VERDICT_PASS, core.EXIT_PASS, 4,
+                           line="CHECK-08         PASS        checked=4 of 4 "
+                                + core.BANNED_VERDICT + "=0")]
+        findings = conformance.check_11_findings(core, records)
+>       assert "banned-verdict:CHECK-08" in findings, findings
+E       AssertionError: []
+E       assert 'banned-verdict:CHECK-08' in []
+
+tools\tests\test_exit_codes.py:184: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_exit_codes.py::test_zero_population_aggregates_to_one
+FAILED tools/tests/test_exit_codes.py::test_zero_artifacts_is_did_not_run - A...
+FAILED tools/tests/test_exit_codes.py::test_the_did_not_run_count_is_separate_from_the_finding_count
+FAILED tools/tests/test_exit_codes.py::test_check_11_detects_a_pass_over_zero_inputs
+FAILED tools/tests/test_exit_codes.py::test_check_11_detects_a_line_carrying_no_population
+FAILED tools/tests/test_exit_codes.py::test_check_11_detects_a_verdict_that_contradicts_its_code
+FAILED tools/tests/test_exit_codes.py::test_check_11_detects_the_banned_verdict_word
+7 failed, 6 passed in 2.39s
+
+EXIT=1
+
+The exit code above is the pytest process's own, read from $? immediately after
+the redirection.
+
+7 failed, 6 passed. The six passes are the assertions a runner with this property
+stubbed out satisfies HONESTLY, and they are here so the failures are not the
+only thing this run proves -- a run in which everything failed would be equally
+consistent with a runner that does not work at all:
+
+  the documented artifact-level code mapping (a pure assertion on the core)
+  a clean artifact exiting 0 with every row over a real population
+  CHECK-11 reporting nothing on well-formed records
+  CHECK-11's own row being DID-NOT-RUN over zero records
+  a directory that does not exist being refused rather than passed
+  the runner finding its core as a sibling from an unrelated working directory
+
+The last one matters more than it looks: it is what says the stubs below are the
+only thing wrong. The runner located its frozen core, loaded the check contract,
+imported the module that exists at this wave, ran it, printed its line and wrote
+its report -- from a working directory with nothing to do with either. What
+failed is the verdict, and only the verdict.

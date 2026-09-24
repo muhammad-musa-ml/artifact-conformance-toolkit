@@ -1,0 +1,32 @@
+{
+  "artifact": "broken-gate-after-measurement",
+  "dated_at": "2026-09-15",
+  "figures": {
+    "median_latency_ms": {
+      "canon_bullet": "example-alpha:P2-B1",
+      "canon_value": 12.0,
+      "derived_from": [
+        "results/raw/items/#replay.median"
+      ],
+      "not_shown": "One replay on one laptop. This record exists so the fixture's only defects are its gate ordering and its unauthorised run.",
+      "population": 500,
+      "population_label": "replayed requests",
+      "reproduce_criterion": {
+        "kind": "relative",
+        "tolerance": 0.05
+      },
+      "runs": [],
+      "similar": "CONFIRMS",
+      "similar_reason_ref": "register-fragments/broken-gate-after-measurement.md",
+      "threshold_claim": false,
+      "tier_achieved": "recompute",
+      "unit": "ms",
+      "value": 12.5
+    }
+  },
+  "gate_token": "4444444444444444444444444444444444444444444444444444444444444444",
+  "schema": "canonkit/figures/1",
+  "schema_version": "canonkit/1",
+  "started_at": "2026-09-15T19:00:00-05:00",
+  "started_at_utc": "2026-09-16T00:00:00+00:00"
+}

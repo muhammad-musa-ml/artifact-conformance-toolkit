@@ -1,0 +1,473 @@
+CHECK-09 -- THE RED TRANSCRIPT
+===========================================
+
+WHAT CHECK-09 REQUIRES, verbatim from the project requirements document:
+
+    Fails when the claim-under-test block is missing: canon + project + bullet
+    id, the bullet text verbatim, the measured counterpart, and a verdict in
+    {SUPPORTS, SUPPORTS-WITH-REVISION, DOES-NOT-SUPPORT}. A missing verdict
+    FAILS. Whether the verdict is CORRECT is human review.
+
+WHY THIS CHECK CARRIES the project overview document's KEY DECISION a design rule
+------------------------------------------------------
+a design rule reads "a measured number that differs from the canon figure WINS and the
+published entry changes". Until a machine can read the claim a measurement is being
+weighed against, that sentence is an intention. The claim block -- canon,
+project, bullet id, the bullet's text VERBATIM, the measured counterpart and one
+of three verdicts -- is the record that makes it enforceable.
+
+(Two different design rules carry that name. The context note's is the dual
+timestamp decision. The one above is the project overview document's Key Decision, and it is
+qualified everywhere it appears rather than left as a bare id.)
+
+THE TWO DEFECTS THIS CHECK EXISTS FOR, AND WHY A REVIEWER MISSES BOTH
+----------------------------------------------------------------------
+1. AN AMBIGUOUS ID. 17 of the 49 bullet ids in tools/canon-bullets.json exist in
+   BOTH canons -- re-derived at execution time from the snapshot's own
+   id_collisions_list, not quoted. A bare `P2-B1` therefore names two different
+   bullets in 35% of cases, and a checker that picked one would be wrong a third
+   of the time while printing a pass. `P2-B1` is one of the seventeen: it is
+   "Traced 58% of p95 latency to retrieval" in example-alpha and "Retired 30
+   hand-run steps a week" in example-beta. Those are not near neighbours.
+
+   ROADMAP and the project overview document compound it by calling example-beta's paths BP-1..BP-5
+   while the canon stores them as P1..P5. `BP-2-B1` must therefore reach
+   example-beta:P2-B1 and must NEVER reach example-alpha:P2-B1. That mapping is
+   canon-specific data, so it is resolved through the snapshot's own derived
+   `display_ref` values. A pattern that stripped the `B` would send every
+   example-beta figure to an alpha bullet in all seventeen colliding cases and
+   would look correct on the thirty-two that do not collide.
+
+2. A PARAPHRASE. The bullet text in an artifact is compared to the snapshot on
+   ENCODED BYTES, with nothing normalized. No casefold, no whitespace collapse,
+   no unicodedata.normalize, no dash or quote folding. Normalization is exactly
+   how a paraphrase passes: an NFC and an NFD spelling of the same accented word
+   render identically on screen and are different bytes, and so is "a  b" beside
+   "a b". Exactly one removal happens first, and it is delimiter removal rather
+   than normalization -- the spaces markdown table syntax requires around a
+   cell's content.
+
+WHAT THIS CHECK DOES NOT DO
+----------------------------
+It NEVER judges whether the verdict is RIGHT. Whether a measured figure would
+mislead a reader of the bullet is a reading bounded by that bullet's own
+metric_basis, and the validation note lists it as manual-only with the
+owner as its named human. This check verifies a verdict EXISTS and is one of
+three legal strings. A check that claimed to decide the rest would be a check
+that cannot discriminate, dressed as rigour.
+
+THE CLAIM TABLE IS FOUND STRUCTURALLY, NOT BY THE ANCHOR
+---------------------------------------------------------
+Measured from the two skeletons this program ships:
+README-SKELETON.md puts the claim-under-test table INSIDE its
+`artifact:claim` region. RESULTS-SKELETON.md puts a DIFFERENT table -- the
+headline before/after table -- inside its `artifact:claim` region and leaves the
+claim-under-test table OUTSIDE it, further down the file. A check keyed on the
+anchor reads the wrong table in one of the two. So a claim table is any
+contiguous two-column markdown table whose first column carries the claim field
+labels; the anchor is recorded beside each table and never keyed on. This is the
+same lesson an earlier plan paid for when `startswith("canonkit.")` matched the
+FILENAME and produced 26 confident false findings: judge structurally, never by
+where a thing happens to sit.
+
+WHAT MAKES THIS A REAL RED RATHER THAN A MISSING FILE
+------------------------------------------------------
+a design rule requires the transcript to be captured BEFORE the implementation commit,
+with commit order as the evidence. The trap in that requirement is that "before
+the implementation" reads as "before any code exists", and a transcript captured
+then records a module that could not be imported or an input that was not there.
+Each of those exits non-zero, each satisfies a naive "non-zero exit" acceptance
+test, and none of them says anything about whether the check DISCRIMINATES.
+an earlier plan's first RED capture was a genuine instance: its anti-rot pin read an
+expectation file that did not exist.
+
+So tools/checks/check_09.py was REGISTERED AND RUNNABLE when this was captured.
+Discovery found it. It loaded the frozen core by path as a sibling, loaded the
+canon snapshot with an explicit encoding="utf-8", read README.md, found the
+claim table structurally, split its `Bullet id` cell into tokens, enumerated the
+figures record, counted a real population, reported it, and wrote a structured
+report. ONE function was stubbed:
+
+    claim_findings()    returns no finding, whatever the table says
+
+The two committed expectation files -- fixtures/broken-artifacts/*/
+expected-CHECK-09.json -- were written by hand from the specification BEFORE the
+detection existed, so the pins below judge the implementation rather than record
+it.
+
+READ THE QUOTED POPULATION LINE IN EVERY FAILURE. It says
+
+    CHECK-09  PASS  found=0 checked=2 of 2 skipped=0 floor=1 waived=0
+              references=2 tables=1 absent=0 bare-bullet-id=0 unknown-key=0
+              text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+
+checked=2 and tables=1 are the proof that the check LOOKED: it found one claim
+table, resolved two bullet references and printed the effective floor. found=0
+is the stub. Every failure below is therefore an assertion about a VERDICT.
+
+THE COMMAND
+------------
+    python -m pytest tools/tests/test_check_09.py -q > .reports/p0112-red09.txt 2>&1
+    echo "EXIT=$?"     ->  EXIT=1
+
+Redirected rather than piped, and the exit code read from $? of the REAL command.
+A command piped into tail returns the PIPE's status, which is how "EXIT=0" gets
+printed beside a failing run.
+
+Interpreter: .venv/Scripts/python.exe, Python 3.12.11, pytest 9.1.1.
+
+THE CAPTURE, VERBATIM
+======================
+
+....F....F.F.F.FFFF.FF.F.FF.                                             [100%]
+================================== FAILURES ===================================
+_________ test_a_bare_colliding_id_is_reported_with_both_resolutions __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_a_bare_colliding_id_is_re0')
+
+    def test_a_bare_colliding_id_is_reported_with_both_resolutions(tmp_path):
+        artifact = conftest.broken_fixture(FIXTURE_BARE_ID)
+        result = run_check(tmp_path, artifact)
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  references=2 tables=1 absent=0 bare-bullet-id=0 unknown-key=0 text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  referen...wsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_a_bare_colliding_id_is_re0/out-report/log')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_09.py:242: AssertionError
+_________ test_one_changed_character_in_the_bullet_text_is_a_finding __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_one_changed_character_in_0')
+
+    def test_one_changed_character_in_the_bullet_text_is_a_finding(tmp_path):
+        key = "example-alpha:P2-B3"
+        original = BULLETS[key]["text"]
+        edited = original[:-2] + ("X" if original[-2] != "X" else "Y") + original[-1]
+        assert edited != original
+        assert len(edited) == len(original)
+    
+        artifact = build(tmp_path,
+                         readme_with(rows_for(key, **{"Bullet text, verbatim": edited})),
+                         figures_record("headline", key))
+        result = run_check(tmp_path, artifact)
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  references=2 tables=1 absent=0 bare-bullet-id=0 unknown-key=0 text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  referen...wsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_one_changed_character_in_0/out-report/log')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_09.py:305: AssertionError
+____________ test_a_non_ascii_paraphrase_is_caught_through_the_cli ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_a_non_ascii_paraphrase_is0')
+
+    def test_a_non_ascii_paraphrase_is_caught_through_the_cli(tmp_path):
+        """The byte rule, exercised end to end against a hermetic snapshot.
+    
+        The committed snapshot happens to be all-ASCII today, so a test that only
+        used it could not show that the comparison survives a non-ASCII bullet. The
+        --canon flag exists for exactly this.
+        """
+        key = "demo:X1-B1"
+        snapshot = {"bullets": {key: {"canon": "demo", "project": "X1",
+                                      "id": "X1-B1", "display_ref": None,
+                                      "text": "Cut café latency by half."}}}
+        snapshot_path = Path(tmp_path) / "hermetic-canon.json"
+        snapshot_path.write_text(
+            json.dumps(snapshot, ensure_ascii=False, indent=2),
+            encoding="utf-8", newline="\n")
+    
+        rows = [("Canon", "demo"), ("Project", "X1"), ("Bullet id", key),
+                ("Bullet text, verbatim", "Cut café latency by half."),
+                ("Measured counterpart", "the headline figure"),
+                ("Verdict", "SUPPORTS")]
+        artifact = build(tmp_path, readme_with(rows),
+                         figures_record("headline", key))
+        result = run_check(tmp_path, artifact,
+                           extra=["--canon", str(snapshot_path)])
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  references=2 tables=1 absent=0 bare-bullet-id=0 unknown-key=0 text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  referen...wsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_a_non_ascii_paraphrase_is0/out-report/log')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_09.py:354: AssertionError
+____ test_an_illegal_verdict_is_a_finding_and_the_message_lists_the_three _____
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_an_illegal_verdict_is_a_f0')
+
+    def test_an_illegal_verdict_is_a_finding_and_the_message_lists_the_three(tmp_path):
+        artifact = conftest.broken_fixture(FIXTURE_CLAIM_BLOCK)
+        result = run_check(tmp_path, artifact)
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  references=2 tables=1 absent=0 bare-bullet-id=0 unknown-key=0 text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  referen...wsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_an_illegal_verdict_is_a_f0/out-report/log')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_09.py:386: AssertionError
+___________________ test_a_missing_verdict_row_is_a_finding ___________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_a_missing_verdict_row_is_0')
+
+    def test_a_missing_verdict_row_is_a_finding(tmp_path):
+        key = "example-alpha:P2-B3"
+        artifact = build(tmp_path, readme_with(rows_for(key, drop=("Verdict",))),
+                         figures_record("headline", key))
+        result = run_check(tmp_path, artifact)
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  references=2 tables=1 absent=0 bare-bullet-id=0 unknown-key=0 text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  referen...wsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_a_missing_verdict_row_is_0/out-report/log')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_09.py:411: AssertionError
+______________ test_a_missing_measured_counterpart_is_a_finding _______________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_a_missing_measured_counte0')
+
+    def test_a_missing_measured_counterpart_is_a_finding(tmp_path):
+        key = "example-alpha:P2-B3"
+        artifact = build(tmp_path,
+                         readme_with(rows_for(key, drop=("Measured counterpart",))),
+                         figures_record("headline", key))
+        result = run_check(tmp_path, artifact)
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  references=2 tables=1 absent=0 bare-bullet-id=0 unknown-key=0 text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  referen...wsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_a_missing_measured_counte0/out-report/log')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_09.py:421: AssertionError
+_________ test_a_figure_with_a_canon_value_and_no_value_is_a_finding __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_a_figure_with_a_canon_val0')
+
+    def test_a_figure_with_a_canon_value_and_no_value_is_a_finding(tmp_path):
+        key = "example-alpha:P2-B3"
+        artifact = build(tmp_path, readme_with(rows_for(key)),
+                         figures_record("headline", key, value=DELETE))
+        result = run_check(tmp_path, artifact)
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  references=2 tables=1 absent=0 bare-bullet-id=0 unknown-key=0 text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  referen...wsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_a_figure_with_a_canon_val0/out-report/log')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_09.py:430: AssertionError
+__________ test_an_unknown_compound_key_is_a_finding_naming_the_key ___________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_an_unknown_compound_key_i0')
+
+    def test_an_unknown_compound_key_is_a_finding_naming_the_key(tmp_path):
+        key = "example-alpha:P2-B3"
+        rows = rows_for(key, **{"Bullet id": "example-alpha:P9-B9"})
+        artifact = build(tmp_path, readme_with(rows),
+                         figures_record("headline", key))
+        result = run_check(tmp_path, artifact)
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  references=2 tables=1 absent=0 bare-bullet-id=0 unknown-key=0 text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  referen...wsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_an_unknown_compound_key_i0/out-report/log')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_09.py:440: AssertionError
+________ test_figures_naming_a_bullet_with_no_claim_table_is_a_finding ________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_figures_naming_a_bullet_w0')
+
+    def test_figures_naming_a_bullet_with_no_claim_table_is_a_finding(tmp_path):
+        """The other side of branch 1, and the distinction an earlier finding calls the most
+        important in the checker: this artifact DID declare a canon claim, so
+        "could not look" would be the wrong answer."""
+        artifact = build(tmp_path, "# demo-artifact\n\nNo claim table here.\n",
+                         figures_record("headline", "example-alpha:P2-B3"))
+        result = run_check(tmp_path, artifact)
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-09         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  references=1 tables=0 absent=0 bare-bullet-id=0 unknown-key=0 text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-09         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  referen...wsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_figures_naming_a_bullet_w0/out-report/log')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_09.py:472: AssertionError
+___________ test_the_six_branches_produce_six_distinct_finding_ids ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_the_six_branches_produce_0')
+
+    def test_the_six_branches_produce_six_distinct_finding_ids(tmp_path):
+        """All six kinds, and every id distinct.
+    
+        Two artifacts rather than one, stated rather than worked around: branch 1
+        fires on the ABSENCE of the claim table that branches 2, 4, 5 and 6 need in
+        order to fire at all, so no single artifact can carry all six.
+        """
+        key = "example-alpha:P2-B3"
+        entry = BULLETS[key]
+    
+        # Three id tokens: one BARE (branch 2), one unknown compound (branch 3),
+        # and one that RESOLVES -- without the third there is nothing to compare the
+        # paraphrased text against, so branch 4 could not fire at all.
+        rows = [("Canon", entry["canon"]), ("Project", entry["project"]),
+                ("Bullet id", "P2-B1, example-alpha:P9-B9, " + key),
+                ("Bullet text, verbatim", "A paraphrase of the bullet."),
+                ("Verdict", "MOSTLY-SUPPORTS")]
+        five = build(tmp_path, readme_with(rows),
+                     figures_record("headline", key), slug="five-branches")
+        absent = build(tmp_path, "# a\n\nNo claim table.\n",
+                       figures_record("headline", key), slug="absent-branch")
+    
+        ids = []
+        kinds = set()
+        for artifact in (five, absent):
+            result = run_check(tmp_path, artifact, tag=artifact.name)
+>           assert result.exit_code == core.EXIT_FINDING, result.stdout
+E           AssertionError: CHECK-09         PASS        found=0 checked=4 of 4 skipped=0 floor=1 waived=0  references=4 tables=1 absent=0 bare-bullet-id=0 unknown-key=0 text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+E             
+E           assert 0 == 1
+E            +  where 0 = CliResult(exit_code=0, stdout='CHECK-09         PASS        found=0 checked=4 of 4 skipped=0 floor=1 waived=0  referen...'/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_the_six_branches_produce_0/out-five-branches/log')).exit_code
+E            +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_09.py:503: AssertionError
+___________ test_the_claim_table_is_found_outside_the_anchor_region ___________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_the_claim_table_is_found_0')
+
+    def test_the_claim_table_is_found_outside_the_anchor_region(tmp_path):
+        """RESULTS-SKELETON.md puts a DIFFERENT table inside its artifact:claim
+        region and the claim-under-test table outside it. An anchor-keyed check
+        reads the wrong table in one of the two skeletons this program ships."""
+        key = "example-alpha:P2-B3"
+        readme = (
+            "# demo-artifact\n\n"
+            "<!-- artifact:claim:begin -->\n"
+            "| | Before | After |\n|---|---|---|\n| latency | 10 | 5 |\n"
+            "<!-- artifact:claim:end -->\n\n"
+            + claim_table(rows_for(key, **{"Verdict": "NEARLY-SUPPORTS"})))
+        artifact = build(tmp_path, readme, figures_record("headline", key))
+        result = run_check(tmp_path, artifact)
+        assert result.report["claim_tables"] == 1, result.report
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  references=2 tables=1 absent=0 bare-bullet-id=0 unknown-key=0 text-mismatch=0 no-counterpart=0 verdict=0 documents=1 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-09         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  referen...wsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_the_claim_table_is_found_0/out-report/log')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_09.py:537: AssertionError
+_______ test_broken_claim_block_still_matches_its_committed_expectation _______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_broken_claim_block_still_0')
+
+    def test_broken_claim_block_still_matches_its_committed_expectation(tmp_path):
+>       _pin(tmp_path, FIXTURE_CLAIM_BLOCK)
+
+tools\tests\test_check_09.py:571: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_broken_claim_block_still_0')
+name = 'broken-claim-block'
+
+    def _pin(tmp_path, name):
+        artifact = conftest.broken_fixture(name)
+        expected = json.loads((artifact / EXPECTATION_FILE).read_text(
+            encoding="utf-8"))
+        result = run_check(tmp_path, artifact)
+        assert result.report is not None, result.stdout
+        for field in PINNED_FIELDS:
+>           assert result.report[field] == expected[field], (
+                "%s: %s is %r; the committed expectation says %r"
+                % (name, field, result.report[field], expected[field]))
+E           AssertionError: broken-claim-block: code is 0; the committed expectation says 1
+E           assert 0 == 1
+
+tools\tests\test_check_09.py:564: AssertionError
+_____ test_broken_bare_bullet_id_still_matches_its_committed_expectation ______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_broken_bare_bullet_id_sti0')
+
+    def test_broken_bare_bullet_id_still_matches_its_committed_expectation(tmp_path):
+>       _pin(tmp_path, FIXTURE_BARE_ID)
+
+tools\tests\test_check_09.py:575: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5896/test_broken_bare_bullet_id_sti0')
+name = 'broken-bare-bullet-id'
+
+    def _pin(tmp_path, name):
+        artifact = conftest.broken_fixture(name)
+        expected = json.loads((artifact / EXPECTATION_FILE).read_text(
+            encoding="utf-8"))
+        result = run_check(tmp_path, artifact)
+        assert result.report is not None, result.stdout
+        for field in PINNED_FIELDS:
+>           assert result.report[field] == expected[field], (
+                "%s: %s is %r; the committed expectation says %r"
+                % (name, field, result.report[field], expected[field]))
+E           AssertionError: broken-bare-bullet-id: code is 0; the committed expectation says 1
+E           assert 0 == 1
+
+tools\tests\test_check_09.py:564: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_check_09.py::test_a_bare_colliding_id_is_reported_with_both_resolutions
+FAILED tools/tests/test_check_09.py::test_one_changed_character_in_the_bullet_text_is_a_finding
+FAILED tools/tests/test_check_09.py::test_a_non_ascii_paraphrase_is_caught_through_the_cli
+FAILED tools/tests/test_check_09.py::test_an_illegal_verdict_is_a_finding_and_the_message_lists_the_three
+FAILED tools/tests/test_check_09.py::test_a_missing_verdict_row_is_a_finding
+FAILED tools/tests/test_check_09.py::test_a_missing_measured_counterpart_is_a_finding
+FAILED tools/tests/test_check_09.py::test_a_figure_with_a_canon_value_and_no_value_is_a_finding
+FAILED tools/tests/test_check_09.py::test_an_unknown_compound_key_is_a_finding_naming_the_key
+FAILED tools/tests/test_check_09.py::test_figures_naming_a_bullet_with_no_claim_table_is_a_finding
+FAILED tools/tests/test_check_09.py::test_the_six_branches_produce_six_distinct_finding_ids
+FAILED tools/tests/test_check_09.py::test_the_claim_table_is_found_outside_the_anchor_region
+FAILED tools/tests/test_check_09.py::test_broken_claim_block_still_matches_its_committed_expectation
+FAILED tools/tests/test_check_09.py::test_broken_bare_bullet_id_still_matches_its_committed_expectation
+13 failed, 15 passed in 4.57s
+
+
+WHAT WENT GREEN, AND WHAT EACH FAILING LINE ABOVE NOW ASSERTS
+==============================================================
+
+  a compound key resolves and a BARE colliding id names BOTH candidates
+  the snapshot really holds ids in both canons (the guard on that guard)
+  BP-2-B1 resolves to example-beta and never to example-alpha
+  every display prefix belongs to exactly one canon, derived not patterned
+  one changed character in the bullet text is a finding
+  an NFC/NFD pair that renders identically is NOT a match
+  a non-ASCII paraphrase is caught end to end, against a hermetic snapshot
+  the snapshot loads through an explicit utf-8 read, not the locale default
+  an illegal verdict is a finding whose message lists all three legal values
+  the legal verdict set is three, and is NOT canonkit's five-value `similar`
+  a missing verdict row is a finding
+  a missing measured counterpart is a finding
+  a figure carrying a canon_value with no value beside it is a finding
+  an unknown compound key is a finding that names the key
+  zero bullet references is DID-NOT-RUN with a refusal, never a pass
+  figures naming a bullet with no claim table is a FINDING, not a refusal
+  the six branches produce six distinct finding ids
+  a correct claim block passes
+  the claim table is found OUTSIDE the anchor region
+  the population floor override prints and demotes
+  both committed expectations still hold
+  the fixture's own bullet text is byte-identical to the snapshot
+
+The second is the one that stops the first from proving less than it looks like
+it proves: if the collision set were empty, the bare-id test would be passing
+over a population that cannot express the thing it asserts. The last is the same
+shape one level down -- if the fixture's text had drifted by a character, the
+text branch would fire too and the pinned found count would be measuring a typo
+rather than the two defects the fixture exists for.
+
+The sixteenth is the "could not look" versus "found a problem" distinction an earlier finding
+calls the most important in the checker. An artifact whose figures name a canon
+bullet and whose README carries no claim table HAS made a claim; answering
+DID-NOT-RUN there would file a finding under the one verdict nobody triages.

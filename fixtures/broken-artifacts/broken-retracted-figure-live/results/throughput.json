@@ -1,0 +1,5 @@
+{
+  "_note": "The FALSE-POSITIVE arm. `6377.7` ends with the digits of the `77.7` needle and is a throughput reading, not the withdrawn hit rate. A check that fires here trains its reader to ignore it.",
+  "rps": 6377.7,
+  "schema": "canonkit/throughput/1"
+}

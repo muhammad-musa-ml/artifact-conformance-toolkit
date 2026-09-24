@@ -1,0 +1,10 @@
+{
+  "check_id": "CHECK-07",
+  "checked": 5,
+  "code": 1,
+  "finding_ids": [
+    "worktree:enclosed-by-other-toplevel"
+  ],
+  "found": 1,
+  "schema_version": "canonkit/1"
+}

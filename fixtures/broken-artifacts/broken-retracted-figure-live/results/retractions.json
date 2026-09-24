@@ -1,0 +1,30 @@
+{
+  "_note": "INVENTED. Nothing here is a figure any artifact in this programme published. A fixture that quoted a real withdrawn number would become a carrier for the scan it exists to test.",
+  "reviewed_on": "2026-09-21",
+  "retracted": [
+    {
+      "id": "an-invented-speedup",
+      "needles": [
+        "4.321"
+      ],
+      "who_withdrew_it": "the fixture's author, on purpose",
+      "why": "The run that produced this ratio executed no guards and no driver probe, so it could not discriminate the hypothesis it was cited for. Withdrawn, and kept here so the retraction points at something.",
+      "withdrawn_on": "2026-08-01"
+    },
+    {
+      "id": "an-invented-rate",
+      "context_terms": [
+        "cache",
+        "hit rate"
+      ],
+      "needles": [
+        "77.7"
+      ],
+      "who_withdrew_it": "the fixture's author, on purpose",
+      "why": "An invented hit rate, withdrawn so this fixture carries a needle whose only appearance in the tree is the tail of a longer number. That appearance is the FALSE-POSITIVE arm and it must not be a finding.",
+      "withdrawn_on": "2026-08-01"
+    }
+  ],
+  "schema": "canonkit/retractions/1",
+  "schema_version": "canonkit/1"
+}

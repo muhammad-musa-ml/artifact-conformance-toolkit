@@ -1,0 +1,37 @@
+# Line endings are load-bearing in this repository, and this file is this phase's
+# FIRST commit so that nothing is ever hashed before it exists.
+#
+# tools/canonkit.py is authored HERE and its sha256 is asserted THERE: up to
+# fourteen other repositories each vendor a byte-identical copy, and a project requirement's
+# whole assertion is that the two sets of bytes agree. core.autocrlf=true is set
+# on this machine at BOTH system and global scope
+# (/home/user/Softwares/Git/etc/gitconfig and /home/user/.gitconfig), so
+# without a per-repository override git rewrites LF to CRLF on checkout.
+#
+# That failure was MEASURED on this machine, not assumed. A controlled two-arm
+# experiment: a 46-byte, zero-CRLF core file committed with no .gitattributes
+# came back out of a clone at 52 bytes with 6 CRLF and a DIFFERENT sha256, and
+# the cross-repository vendoring assertion then failed for a reason having
+# nothing whatever to do with the core's content. The artifact looks tampered
+# with when it is not. The failure arises from the MISMATCH between two
+# repositories' settings rather than from either one alone, so both ends need
+# this rule; the artifact template ships the same file into every generated
+# artifact.
+#
+# The rule below is deliberately BROAD, and that is a deliberate departure from
+# the analog whose comment discipline the rest of this file copies
+# (the-upstream-project/.gitattributes, which covers *.sh plus one named path). That
+# file's own second stanza -- "the *.sh rule above does NOT cover it" -- is the
+# argument against its own scope: a narrow rule is a list of everything you
+# remembered on the day you wrote it, and the file this program must protect is
+# a .py. Every tracked blob in this repository is normalized to LF in the index
+# and checked out as LF in the working tree.
+* text=auto eol=lf
+
+# Belt and braces for the extensionless POSIX-sh pre-push hook. The
+# `* text=auto eol=lf` rule above ALREADY covers this path -- this line does not
+# exist because the broad rule is insufficient, and a reader must not infer that
+# it is. It exists because a CRLF inside a `#!/bin/sh` shebang breaks the script
+# silently on macOS/Linux, the hook is activated by `git config core.hooksPath
+# .githooks` on every platform, and the cost of saying so twice is one line.
+.githooks/pre-push text eol=lf

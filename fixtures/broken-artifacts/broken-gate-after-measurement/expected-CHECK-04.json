@@ -1,0 +1,11 @@
+{
+  "check_id": "CHECK-04",
+  "checked": 3,
+  "code": 1,
+  "finding_ids": [
+    "gate:after-measurement:results/figures.json",
+    "gate:token-absent:results/raw/run-0002.json"
+  ],
+  "found": 2,
+  "schema_version": "canonkit/1"
+}

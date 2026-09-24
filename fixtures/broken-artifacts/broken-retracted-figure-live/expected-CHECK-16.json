@@ -1,0 +1,10 @@
+{
+  "check_id": "CHECK-16",
+  "checked": 7,
+  "code": 1,
+  "finding_ids": [
+    "retraction-live:NOTES.md:3"
+  ],
+  "found": 1,
+  "schema_version": "canonkit/1"
+}

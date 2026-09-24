@@ -1,0 +1,444 @@
+LINT-BANNED-NAMES -- THE RED TRANSCRIPT
+====================================================
+
+WHAT the banned-spelling rule REQUIRES, verbatim from the context note:
+
+    `<redacted-path>` is banned outright. conformance.py FAILS on its existence
+    in any artifact, and a repo-wide lint FAILS on the literal string in any
+    plan or doc. G2 is a BLOCKER because an earlier round gives the ambiguity eighteen
+    chances to be inherited; the lint gives that sweep a mechanical needle.
+
+(The path itself is redacted throughout this file, and so is every span the
+capture below echoes. See "THE TOOL NEVER PRINTS ITS OWN NEEDLE".)
+
+THE PROBLEM, WHICH IS NOT "FIND THE STRING"
+--------------------------------------------
+The literal is already in this repository many times over, and almost every one
+of those occurrences IS THE DECISION RECORD THAT CREATES THE BAN. A lint written
+as "FAIL on the literal in any plan or doc" is red on day one, on its own
+charter. The two repairs a maintainer reaches for both destroy it: weaken the
+rule, and the ban stops being enforceable; add an exclusion list, and it grows
+every time anyone documents the ban.
+
+A third repair looks better and is the same mistake in better clothes: key the
+classification on the DIRECTORY. MEASURED against this tree, a rule reading
+"LIVE in templates/, tools/ or any *-PLAN.md" classifies tools/
+lint_banned_names.py itself, tools/conformance.py, and a dozen plan lines that
+INSTRUCT the ban's enforcement as violations of the ban they enforce.
+
+AND THE POPULATION GROWS, RE-DERIVED RATHER THAN QUOTED
+--------------------------------------------------------
+Measured by this tool at the moment of this capture, over the tracked files of
+this worktree:
+
+    listed 174, scanned 174, files with a hit 14
+    occurrences 41, lines carrying a hit 34
+
+The two figures differ because one generated HTML file holds several hits on two
+long lines, so an occurrence-count lint and a line-count lint give DIFFERENT
+answers. Both are printed. The research note states the literal "appears 15 times
+in this repo"; that figure was correct when it was taken and is not correct now.
+Nothing in the detector hard-codes any of them -- a test greps its source for
+every figure the planning documents quote and requires zero hits.
+
+THE FOUR ROLES, AND WHY THE DEFAULT IS THE LOAD-BEARING PART
+--------------------------------------------------------------
+  DETECTOR   a needle, a fixture payload, or a test or acceptance criterion
+             naming the path in order to prove it is CAUGHT. Never a finding.
+  FROZEN     a document quoting, naming or describing the ban in order to
+             EXPLAIN it. Never a finding.
+  LIVE       a real FILE at that path, or prose INSTRUCTING an author to write,
+             emit, read or consume it. A finding.
+  UNCLASSIFIED  the DEFAULT. Not a role: a hit no cue describes is printed with
+             its span, counted, and exits non-zero.
+
+Defaulting to FROZEN would make every hit the cue lists fail to describe vanish
+into a count nobody reads, and the LIVE arm would shrink to the file-exists check
+conformance.py already performs inside an artifact -- which is precisely the
+needle the banned-spelling rule says the eighteen-plan sweep must have and would not need this tool
+for. Defaulting to LIVE would make the lint red on day one and invite the
+exclusion list. UNCLASSIFIED is neither: ambiguity becomes a COUNT the owner must
+close, one hit at a time, by an IN-PLACE ADJUDICATION -- a short note beside the
+hit, inside its span, that supplies a cue. Widening a cue set to sweep up an
+inconvenient hit is NOT sanctioned, and neither is an exclusion list.
+
+THE TOOL NEVER PRINTS ITS OWN NEEDLE
+-------------------------------------
+Every span this tool reports is echoed with the path replaced by
+`<redacted-path>`, and the header line names the DECISION rather than the
+spelling. Without that, this transcript, every report file and every failing
+assertion message that quotes a span would seed the literal into files the lint
+scans -- the tool reading its own output back to itself, with a fresh crop of
+hits nobody wrote by hand. tools/conformance.py's the banned-spelling rule guard declines to spell
+it in its PASS note for the same reason, and the placeholder is asserted to
+contain no word any cue table fires on, so a redacted span cannot acquire a cue
+it did not have.
+
+The detector's own source, and conformance.py's, each carry ZERO occurrences:
+the needle is assembled at run time from a directory component and a filename
+component held as separate strings. A detector carrying its own needle reports
+itself on every run, and the obvious repair -- excluding the detector's own path
+-- is the exclusion list this design exists to avoid.
+
+CUES MATCH ON WORD BOUNDARIES
+------------------------------
+A substring reading of "the span contains `ban`" fires on `urban`; of `not` on
+`nothing` and `note`; of `read` on `already` and `thread`. A cue set matching
+those classifies by accident, which is the failure this design is about. Two
+sentences in the suite exist only to pin this: "The urban pipeline writes X
+nightly" and "Nothing in the notes writes X here" are both LIVE, and only a
+substring match could see a prohibition in either.
+
+WHAT MAKES THIS A REAL RED RATHER THAN A MISSING FILE
+------------------------------------------------------
+a design rule requires the transcript to be captured BEFORE the implementation commit.
+The trap is that "before the implementation" reads as "before any code exists",
+and a transcript captured then records a module that could not be imported. Each
+of those exits non-zero, each satisfies a naive "non-zero exit" acceptance test,
+and none says anything about whether the lint DISCRIMINATES. an earlier plan's RED
+transcript failed its OWN gate because its first draft pasted the grep pattern
+it was documenting; an earlier plan's first capture was a false RED because a pin read
+an expectation file that did not exist.
+
+So tools/lint_banned_names.py was RUNNABLE when this was captured. It tested its
+own needle against a path assembled from the same parts, enumerated the tracked
+tree through `git ls-files`, read every file, located every hit, computed every
+span, resolved arm 0 against the real filesystem, counted occurrences AND lines
+separately, listed the cues that matched nothing, and printed all four role
+counts beside the effective file floor. ONE function was stubbed:
+
+    classify()   returns LIVE for every hit, whatever the sentence says
+
+So the summary line read `live 41, frozen 0, detector 0, unclassified 0` and the
+failures below are assertions about a VERDICT.
+
+THE COMMAND
+------------
+    python -m pytest tools/tests/test_banned_names.py -q > .reports/p0112-red-lint.txt 2>&1
+    echo "EXIT=$?"     ->  EXIT=1
+
+Redirected rather than piped, and the exit code read from $? of the REAL command.
+A command piped into tail returns the PIPE's status, which is how "EXIT=0" gets
+printed beside a failing run.
+
+Interpreter: .venv/Scripts/python.exe, Python 3.12.11, pytest 9.1.1.
+
+THE CAPTURE, VERBATIM
+======================
+
+....F.....FFFFFFF.FFFF....F.                                             [100%]
+================================== FAILURES ===================================
+_________ test_a_population_below_the_effective_floor_is_did_not_run __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_a_population_below_the_ef0')
+
+    def test_a_population_below_the_effective_floor_is_did_not_run(tmp_path):
+        """a design rule over this tool: the floor is declared in code, overridable, and the
+        EFFECTIVE value is what prints. A verdict over a tree the scan did not
+        really read is the 0/0 pass with a number beside it."""
+        root, relatives = tree(tmp_path, {"a.md": sentence_frozen()}, name="floor")
+    
+        ok = lint.scan(root, relative_paths=relatives)
+        assert ok.floor == lint.DEFAULT_FILE_FLOOR
+        assert not ok.below_floor
+>       assert ok.code == lint.EXIT_PASS
+E       assert 1 == 0
+E        +  where 1 = <lint_banned_names_under_test.ScanReport object at 0x000001D8742389E0>.code
+E        +  and   0 = lint.EXIT_PASS
+
+tools\tests\test_banned_names.py:231: AssertionError
+____________ test_role_live_an_instruction_inside_a_templates_file ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_role_live_an_instruction_0')
+
+    def test_role_live_an_instruction_inside_a_templates_file(tmp_path):
+        """(a) A sentence instructing an author to WRITE the path, in a copy of a
+        templates/ file. A directory rule would have called this LIVE for the wrong
+        reason; the point is that the SENTENCE decides."""
+        root, relatives = tree(
+            tmp_path, {"templates/README-SKELETON.md": sentence_live()}, name="a")
+        report = lint.scan(root, relative_paths=relatives)
+        assert report.counts[lint.ROLE_LIVE] == 1, report.as_dict()
+        assert report.code == lint.EXIT_FINDING
+        hit = report.hits[0]
+>       assert hit.verdict.arm == 2
+E       AssertionError: assert 0 == 2
+E        +  where 0 = Verdict(live, arm=0, cue='<stub>').arm
+E        +    where Verdict(live, arm=0, cue='<stub>') = <lint_banned_names_under_test.Hit object at 0x000001D874238260>.verdict
+
+tools\tests\test_banned_names.py:338: AssertionError
+________ test_role_frozen_a_documenting_sentence_in_a_decision_record _________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_role_frozen_a_documenting0')
+
+    def test_role_frozen_a_documenting_sentence_in_a_decision_record(tmp_path):
+        """(b) A sentence quoting the ban, in a copy of a decision record."""
+        root, relatives = tree(
+            tmp_path, {"note-b.md": sentence_frozen()}, name="b")
+        report = lint.scan(root, relative_paths=relatives)
+>       assert report.counts[lint.ROLE_FROZEN] == 1, report.as_dict()
+E       AssertionError: {'schema': 'canonkit/lint-banned-names/1', 'root': '\\home\\user\\AppData\\Local\\Temp\\pytest-of-user\\pytest-5925\\test_role_frozen_a_documenting0\\b', 'floor': 1, 'below_floor': False, ...}
+E       assert 0 == 1
+
+tools\tests\test_banned_names.py:347: AssertionError
+_______________ test_role_detector_a_needle_inside_a_plan_file ________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_role_detector_a_needle_in0')
+
+    def test_role_detector_a_needle_inside_a_plan_file(tmp_path):
+        """(c) The literal as a detector needle in a copy of a *-PLAN.md.
+    
+        A two-verdict lint cannot express this case and would report the
+        ENFORCEMENT of the ban as a violation of it.
+        """
+        root, relatives = tree(
+            tmp_path, {"note-c.md": sentence_detector()}, name="c")
+        report = lint.scan(root, relative_paths=relatives)
+>       assert report.counts[lint.ROLE_DETECTOR] == 1, report.as_dict()
+E       AssertionError: {'schema': 'canonkit/lint-banned-names/1', 'root': '\\home\\user\\AppData\\Local\\Temp\\pytest-of-user\\pytest-5925\\test_role_detector_a_needle_in0\\c', 'floor': 1, 'below_floor': False, ...}
+E       assert 0 == 1
+
+tools\tests\test_banned_names.py:361: AssertionError
+_________ test_the_same_literal_in_the_same_file_classifies_two_ways __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_the_same_literal_in_the_s0')
+
+    def test_the_same_literal_in_the_same_file_classifies_two_ways(tmp_path):
+        """The assertion that proves classification is keyed on ROLE, not on PATH."""
+        files = {"note-c.md": sentence_detector() + sentence_live()}
+        report = scan(tmp_path, files, name="two-ways")
+        assert report.occurrences == 2, report.as_dict()
+>       assert roles_at(report, "note-c.md") == [lint.ROLE_DETECTOR,
+                                                     lint.ROLE_LIVE]
+E       AssertionError: assert ['live', 'live'] == ['detector', 'live']
+E         
+E         At index 0 diff: 'live' != 'detector'
+E         Use -v to get more diff
+
+tools\tests\test_banned_names.py:372: AssertionError
+____________ test_the_particle_flip_one_token_changes_the_verdict _____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_the_particle_flip_one_tok0')
+
+    def test_the_particle_flip_one_token_changes_the_verdict(tmp_path):
+        """The SAME sentence, LIVE without `must not` and FROZEN with it.
+    
+        This is what makes arm 2 a decision procedure rather than a reading.
+        """
+        live = scan(tmp_path, {"a.md": sentence_live()}, name="flip-live")
+        frozen = scan(tmp_path, {"a.md": sentence_live_with_particle()},
+                      name="flip-frozen")
+        assert roles_at(live, "a.md") == [lint.ROLE_LIVE], live.as_dict()
+>       assert roles_at(frozen, "a.md") == [lint.ROLE_FROZEN], frozen.as_dict()
+E       AssertionError: {'schema': 'canonkit/lint-banned-names/1', 'root': '\\home\\user\\AppData\\Local\\Temp\\pytest-of-user\\pytest-5925\\test_the_particle_flip_one_tok0\\flip-frozen', 'floor': 1, 'below_floor': False, ...}
+E       assert ['live'] == ['frozen']
+E         
+E         At index 0 diff: 'live' != 'frozen'
+E         Use -v to get more diff
+
+tools\tests\test_banned_names.py:391: AssertionError
+_______ test_a_bare_mention_with_no_cue_is_unclassified_and_is_printed ________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_a_bare_mention_with_no_cu0')
+
+    def test_a_bare_mention_with_no_cue_is_unclassified_and_is_printed(tmp_path):
+        """Arm 4. Ambiguity becomes a COUNT the owner must close, not a silence."""
+        root, relatives = tree(tmp_path, {"table.md": sentence_bare_cell()},
+                               name="bare")
+        report = lint.scan(root, relative_paths=relatives)
+>       assert report.counts[lint.ROLE_UNCLASSIFIED] == 1, report.as_dict()
+E       AssertionError: {'schema': 'canonkit/lint-banned-names/1', 'root': '\\home\\user\\AppData\\Local\\Temp\\pytest-of-user\\pytest-5925\\test_a_bare_mention_with_no_cu0\\bare', 'floor': 1, 'below_floor': False, ...}
+E       assert 0 == 1
+
+tools\tests\test_banned_names.py:401: AssertionError
+__________ test_an_in_place_adjudication_closes_an_unclassified_hit ___________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_an_in_place_adjudication_0')
+
+    def test_an_in_place_adjudication_closes_an_unclassified_hit(tmp_path):
+        """The SANCTIONED repair, demonstrated: a note beside the hit, inside its
+        span, supplies a cue. No exclusion list, no widened cue set."""
+        before = scan(tmp_path, {"t.md": sentence_bare_cell()}, name="adj-before")
+>       assert before.counts[lint.ROLE_UNCLASSIFIED] == 1
+E       assert 0 == 1
+
+tools\tests\test_banned_names.py:431: AssertionError
+___________________ test_the_exit_ladder_on_all_four_rungs ____________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_the_exit_ladder_on_all_fo0')
+
+    def test_the_exit_ladder_on_all_four_rungs(tmp_path):
+        live = scan(tmp_path, {"a.md": sentence_live()}, name="rung-live")
+        assert live.counts[lint.ROLE_LIVE] > 0
+        assert live.code == lint.EXIT_FINDING
+    
+        unclassified = scan(tmp_path, {"a.md": sentence_bare_cell()},
+                            name="rung-unclassified")
+>       assert unclassified.counts[lint.ROLE_LIVE] == 0
+E       assert 1 == 0
+
+tools\tests\test_banned_names.py:471: AssertionError
+___________ test_growth_in_the_harmless_roles_never_moves_the_exit ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_growth_in_the_harmless_ro0')
+
+    def test_growth_in_the_harmless_roles_never_moves_the_exit(tmp_path):
+        """The total is EXPECTED to rise with every document that discusses the ban."""
+        small = scan(tmp_path, {"a.md": sentence_frozen() + sentence_detector()},
+                     name="grow-small")
+        big = scan(tmp_path,
+                   {"a.md": sentence_frozen() * 3 + sentence_detector() * 4},
+                   name="grow-big")
+>       assert small.code == lint.EXIT_PASS
+E       assert 1 == 0
+E        +  where 1 = <lint_banned_names_under_test.ScanReport object at 0x000001D87425B800>.code
+E        +  and   0 = lint.EXIT_PASS
+
+tools\tests\test_banned_names.py:495: AssertionError
+____________ test_the_cli_returns_the_ladder_from_a_real_git_tree _____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_the_cli_returns_the_ladde0')
+
+    def test_the_cli_returns_the_ladder_from_a_real_git_tree(tmp_path):
+        """End to end, through git ls-files, with the CHILD's own exit code."""
+        clean_src = Path(tmp_path) / "clean"
+        (clean_src / "docs").mkdir(parents=True)
+        (clean_src / "docs" / "record.md").write_text(
+            sentence_frozen(), encoding="utf-8", newline="\n")
+        clean = conftest.committed_tree(tmp_path, clean_src)
+    
+        result = run_cli(tmp_path, clean, tag="clean")
+>       assert result.exit_code == lint.EXIT_PASS, result.stdout
+E       AssertionError: lint-banned-names   scope=tracked files under \home\user\AppData\Local\Temp\pytest-of-user\pytest-5925\test_the_cli_returns_the_ladde0\clean-committed
+E           needle            the the banned-spelling rule banned results-record spelling (assembled at run time; this tool never prints it)
+E           population        listed=2 scanned=2 unreadable=0 files-with-hits=1 floor=1
+E           occurrences       1  (lines with a hit: 1 -- the two figures differ when one line carries several)
+E           roles             live 1, frozen 0, detector 0, unclassified 0
+E           real files        0 on disk at the banned path
+E           unused cues       59 -- AUTHORING_VERBS:consume, AUTHORING_VERBS:consumes, AUTHORING_VERBS:emit, AUTHORING_VERBS:emits, AUTHORING_VERBS:generate, AUTHORING_VERBS:generates, AUTHORING_VERBS:load, AUTHORING_VERBS:loads, AUTHORING_VERBS:output, AUTHORING_VERBS:outputs, AUTHORING_VERBS:produce, AUTHORING_VERBS:produces, AUTHORING_VERBS:read, AUTHORING_VERBS:reads, AUTHORING_VERBS:save, AUTHORING_VERBS:saves, AUTHORING_VERBS:write, AUTHORING_VERBS:writes, AUTHORING_VERBS:writing, AUTHORING_VERBS:written, DETECTOR_CUES:a test, DETECTOR_CUES:acceptance criterion, DETECTOR_CUES:assert, DETECTOR_CUES:asserts, DETECTOR_CUES:classif, DETECTOR_CUES:detector, DETECTOR_CUES:exits 2, DETECTOR_CUES:expect, DETECTOR_CUES:fixture, DETECTOR_CUES:grep, DETECTOR_CUES:is caught, DETECTOR_CUES:is reported, DETECTOR_CUES:lint, DETECTOR_CUES:needle, DETECTOR_CUES:non-zero exit, DETECTOR_CUES:tests that, DETECTOR_CUES:tmp_path, PROHIBITION_PARTICLES:the banned-spelling rule, PROHIBITION_PARTICLES:ban, PROHIBITION_PARTICLES:banned, PROHIBITION_PARTICLES:bans, PROHIBITION_PARTICLES:forbidden, PROHIBITION_PARTICLES:instead of, PROHIBITION_PARTICLES:must not, PROHIBITION_PARTICLES:never, PROHIBITION_PARTICLES:no longer, PROHIBITION_PARTICLES:not, PROHIBITION_PARTICLES:prohibited, PROHIBITION_PARTICLES:rather than, PROHIBITION_PARTICLES:refuses, PROHIBITION_PARTICLES:rejects, PROHIBITION_PARTICLES:superseded, QUOTING_CUES:documents, QUOTING_CUES:explains, QUOTING_CUES:formerly, QUOTING_CUES:historical, QUOTING_CUES:records, QUOTING_CUES:the old name, QUOTING_CUES:used to
+E         
+E           LIVE (1):
+E             docs/record.md:1:19  arm=0 cue=<stub>
+E               span: the banned-spelling rule bans the name <redacted-path> outright, and records why
+E         
+E       assert 1 == 0
+E        +  where 1 = CliResult(exit_code=1, stdout='lint-banned-names   scope=tracked files under \\home\\user\\AppData\\Local\\Temp\\p...owsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_the_cli_returns_the_ladde0/out-clean/log')).exit_code
+E        +  and   0 = lint.EXIT_PASS
+
+tools\tests\test_banned_names.py:512: AssertionError
+_________ test_the_positive_assertion_is_not_satisfied_by_a_quotation _________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_the_positive_assertion_is0')
+
+    def test_the_positive_assertion_is_not_satisfied_by_a_quotation(tmp_path):
+        """A test asserting the ban's TEXT exists can be satisfied by a quotation.
+    
+        So: the positive assertion is `live == 0`, scoped to the LIVE role alone.
+        Inserting a quotation-shaped hit must not move it -- and inserting a real
+        instruction must, or the assertion is decoration.
+        """
+        base = {"doc.md": sentence_frozen()}
+        first = scan(tmp_path, base, name="trap-1")
+>       assert first.counts[lint.ROLE_LIVE] == 0
+E       assert 1 == 0
+
+tools\tests\test_banned_names.py:541: AssertionError
+_____________ test_no_hit_in_a_plan_file_or_the_skeleton_is_live ______________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5925/test_no_hit_in_a_plan_file_or_0')
+
+    def test_no_hit_in_a_plan_file_or_the_skeleton_is_live(tmp_path):
+        """The six paths a directory-keyed rule would have classified as violations.
+    
+        Derived from the report rather than listed here: a committed list of
+        filenames rots the moment a plan is added or renamed, and this assertion
+        has to keep meaning something after an earlier round re-homes eighteen more.
+        """
+        report = lint.scan(REPO_ROOT)
+        selected = [hit for hit in report.hits
+                    if hit.path.endswith("-PLAN.md")
+                    or hit.path.rsplit("/", 1)[-1] == "SKELETON.md"]
+        paths = sorted({hit.path for hit in selected})
+        assert len(paths) >= 6, paths
+        assert len(selected) >= len(paths)
+        for hit in selected:
+>           assert hit.verdict.role in (lint.ROLE_FROZEN, lint.ROLE_DETECTOR), (
+                "%s:%d classified %s -- a plan that documents or enforces the ban "
+                "is not violating it. span: %s"
+                % (hit.path, hit.line, hit.verdict.role, hit.span))
+E           AssertionError: a project plan document:216 classified live -- a plan that documents or enforces the ban is not violating it. span:     - Neither skeleton contains the banned path `<redacted-path>`
+E           assert 'live' in ('frozen', 'detector')
+E            +  where 'live' = Verdict(live, arm=0, cue='<stub>').role
+E            +    where Verdict(live, arm=0, cue='<stub>') = <lint_banned_names_under_test.Hit object at 0x000001D87427FB90>.verdict
+
+tools\tests\test_banned_names.py:640: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_banned_names.py::test_a_population_below_the_effective_floor_is_did_not_run
+FAILED tools/tests/test_banned_names.py::test_role_live_an_instruction_inside_a_templates_file
+FAILED tools/tests/test_banned_names.py::test_role_frozen_a_documenting_sentence_in_a_decision_record
+FAILED tools/tests/test_banned_names.py::test_role_detector_a_needle_inside_a_plan_file
+FAILED tools/tests/test_banned_names.py::test_the_same_literal_in_the_same_file_classifies_two_ways
+FAILED tools/tests/test_banned_names.py::test_the_particle_flip_one_token_changes_the_verdict
+FAILED tools/tests/test_banned_names.py::test_a_bare_mention_with_no_cue_is_unclassified_and_is_printed
+FAILED tools/tests/test_banned_names.py::test_an_in_place_adjudication_closes_an_unclassified_hit
+FAILED tools/tests/test_banned_names.py::test_the_exit_ladder_on_all_four_rungs
+FAILED tools/tests/test_banned_names.py::test_growth_in_the_harmless_roles_never_moves_the_exit
+FAILED tools/tests/test_banned_names.py::test_the_cli_returns_the_ladder_from_a_real_git_tree
+FAILED tools/tests/test_banned_names.py::test_the_positive_assertion_is_not_satisfied_by_a_quotation
+FAILED tools/tests/test_banned_names.py::test_no_hit_in_a_plan_file_or_the_skeleton_is_live
+13 failed, 15 passed in 1.70s
+
+
+WHAT WENT GREEN, AND WHAT EACH FAILING LINE ABOVE NOW ASSERTS
+==============================================================
+
+  the detector and the runner each carry zero occurrences of the literal
+  the lint reads its own source like any other file -- not excluded, just empty
+  the tool never prints the needle, in a span, a report or a header
+  the needle is tested against an assembled path before it is trusted
+  no figure any planning document quotes is hard-coded in the detector
+  every cue carries a reason, and exactly one cue is declared a prefix
+  cues match on word boundaries: `urban` is not `ban`, `nothing` is not `not`
+  the run prints which cues matched nothing
+  ROLE (a): an instruction to write the path, in a templates/ copy  -> LIVE
+  ROLE (b): a sentence quoting the ban, in a decision-record copy   -> FROZEN
+  ROLE (c): a detector needle, in a *-PLAN.md copy                  -> DETECTOR
+  the SAME literal in the SAME file classifies two different ways
+  the particle flip: one `must not` turns LIVE into FROZEN
+  a bare mention with no cue is UNCLASSIFIED, exits 2, and is printed with
+      its path, line, column and span
+  an in-place adjudication closes an unclassified hit; no exclusion list
+  a real file on disk is LIVE whatever the sentence says (arm 0)
+  the exit ladder on all four rungs
+  growth in the harmless roles never moves the exit code
+  the CLI returns the ladder from a real git tree, child exit code
+  a population below the effective floor is DID-NOT-RUN, and says so
+  the floor OVERRIDES a live finding rather than hiding it
+  the positive assertion is not satisfied by a quotation
+  classify() reads only its arguments
+  the span is not cut by the dot inside the filename
+  the repo run closes its own identity: four counts sum to occurrences
+  the occurrence count and the line count DISAGREE on this tree
+  no hit in any *-PLAN.md or in SKELETON.md is LIVE
+  those paths are really in the scanned set
+
+THE THIRD FROM LAST IS THE ONE THE DIRECTORY-KEYED RULE FAILED. Five *-PLAN.md
+files and SKELETON.md carry the literal; every one of those occurrences either
+documents the ban or instructs a detector, and a rule keyed on the path would
+have reported all of them as violations of the ban they enforce.
+
+THE FOURTH FROM LAST IS THE ONE THAT STOPS THE OTHERS PROVING LESS THAN THEY
+LOOK LIKE THEY PROVE: if the needle had silently stopped matching, every count
+above would be a confident zero and every assertion about "no LIVE hits" would
+pass over nothing at all.
+
+WHAT IS STILL OPEN, STATED HERE RATHER THAN LEFT FOR A READER TO NOTICE
+========================================================================
+The repository is NOT at `live 0, unclassified 0`. The remaining hits sit in the
+an owner decision record, the two generated question files derived from it, and one
+diagram line in `the project features document`. Each needs an IN-PLACE
+ADJUDICATION, which is a text edit in a file an earlier plan does not own. The counts,
+the spans and the note each one needs are recorded in an earlier summary, with
+an earlier plan named as the owner. The lint exits non-zero over this tree, which is
+the correct answer to a tree that has not been adjudicated yet -- an exclusion
+list would have made it green and meaningless.

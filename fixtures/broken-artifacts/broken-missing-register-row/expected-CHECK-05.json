@@ -1,0 +1,10 @@
+{
+  "check_id": "CHECK-05",
+  "checked": 1,
+  "code": 1,
+  "finding_ids": [
+    "register:missing-row:alpha-artifact-3"
+  ],
+  "found": 1,
+  "schema_version": "canonkit/1"
+}

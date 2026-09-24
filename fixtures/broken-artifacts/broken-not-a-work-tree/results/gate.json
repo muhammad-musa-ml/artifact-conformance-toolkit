@@ -1,0 +1,11 @@
+{
+  "artifact": "broken-not-a-work-tree",
+  "dated_at": "2026-09-15T04:00:00Z",
+  "failed_ids": [],
+  "ok": true,
+  "passed": true,
+  "run_token": "0000000000000000000000000000000000000000000000000000000000000000",
+  "schema": "canonkit/gate/1",
+  "schema_version": "canonkit/1",
+  "started_at": "2026-09-15T04:00:00Z"
+}

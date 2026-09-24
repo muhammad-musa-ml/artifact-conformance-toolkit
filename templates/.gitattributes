@@ -1,0 +1,45 @@
+# a project requirement. Committed as this artifact's FIRST commit, before anything is hashed.
+#
+# One paragraph per rule, which is the comment discipline this repository
+# inherited from the only .gitattributes analog available. That analog's own
+# scope is the argument against it: it was narrow and per-pattern (*.sh plus one
+# named path) and its second stanza had to explain that "the *.sh rule above
+# does NOT cover it". A broad rule needs no such stanza.
+
+# THE NORMATIVE RULE. Every text blob enters the index as LF regardless of the
+# committer's core.autocrlf setting or operating system.
+#
+# WHY THIS FILE EXISTS AT ALL, and why it is committed FIRST rather than
+# alongside everything else. canonkit.py is authored in the tooling repository
+# and hashed HERE. A checkout with different end-of-line settings gives a
+# different digest for byte-identical content, so the vendoring assertion fails
+# for a reason that has nothing to do with the core's content -- and the
+# artifact then looks tampered with when it is not.
+#
+# THE FAILURE ARISES FROM A MISMATCH BETWEEN TWO REPOSITORIES, NOT FROM EITHER
+# ONE ALONE. That was measured, in a three-arm experiment, before this template
+# existed: normalizing only the source repository does not close it. BOTH ends
+# need this rule, which is why the tooling repository carries the identical line
+# and why every generated artifact carries this file.
+#
+# Committing it first is not tidiness either. Git applies these attributes when
+# a blob ENTERS the index, so any file committed before this rule is in force
+# keeps whatever line endings it was written with -- permanently, until someone
+# renormalizes. A commit that added this file alongside the rest of the tree
+# would reproduce the exact defect the file exists to prevent, inside the
+# artifact meant to demonstrate the fix.
+* text=auto eol=lf
+
+# Genuinely binary payloads, marked so git never attempts text conversion on
+# them. A normalized binary is a corrupted binary, and the corruption is silent.
+*.png binary
+*.jpg binary
+*.pdf binary
+*.gz binary
+*.zip binary
+*.7z binary
+*.parquet binary
+*.gguf binary
+*.safetensors binary
+*.npy binary
+*.npz binary

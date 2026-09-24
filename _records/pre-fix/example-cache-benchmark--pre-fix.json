@@ -1,0 +1,455 @@
+{
+  "artifact": "example-cache-benchmark",
+  "artifacts": [
+    {
+      "artifact": "example-cache-benchmark",
+      "artifact_dir": "/path/to/example-cache-benchmark",
+      "checks": [
+        {
+          "check_id": "CHECK-01",
+          "checked": 0,
+          "code": 2,
+          "finding_ids": [],
+          "floor": 1,
+          "found": 0,
+          "listed": 0,
+          "not_examined": 0,
+          "note": "there is no results/figures.json under \\path\\to\\example-cache-benchmark, so there are zero figures to examine. REPAIR: run derive.py before the checker.",
+          "source": "module:check_01.py",
+          "verdict": "DID-NOT-RUN",
+          "waived": 0
+        },
+        {
+          "check_id": "CHECK-02",
+          "checked": 0,
+          "code": 2,
+          "finding_ids": [],
+          "floor": 1,
+          "found": 0,
+          "listed": 99,
+          "not_examined": 99,
+          "note": "no results file under example-cache-benchmark/results carries a machine-emitted started_at, so there is no machine side to compare a README date against. A date that agrees with nothing is not a date that agrees. REPAIR: run the measurement through runmeta.start_run, which stamps started_at and started_at_utc.",
+          "source": "module:check_02.py",
+          "verdict": "DID-NOT-RUN",
+          "waived": 0
+        },
+        {
+          "check_id": "CHECK-03",
+          "checked": 0,
+          "code": 2,
+          "finding_ids": [],
+          "floor": 1,
+          "found": 0,
+          "listed": 0,
+          "not_examined": 0,
+          "note": "README.md carries no artifact: region of any kind, so this is not a document this check addresses. A finding about a paragraph that was never read is not a finding. REPAIR: generate the artifact from the skeleton, which ships the paired regions.",
+          "source": "module:check_03.py",
+          "verdict": "DID-NOT-RUN",
+          "waived": 0
+        },
+        {
+          "check_id": "CHECK-04",
+          "checked": 0,
+          "code": 2,
+          "finding_ids": [],
+          "floor": 1,
+          "found": 0,
+          "listed": 99,
+          "not_examined": 99,
+          "note": "no results file under example-cache-benchmark/results records a started_at, so there is no measurement for a gate to have preceded. An ordering claim over nothing is not an ordering claim. REPAIR: run the measurement through runmeta.start_run, which stamps started_at and the gate token.",
+          "source": "module:check_04.py",
+          "verdict": "DID-NOT-RUN",
+          "waived": 0
+        },
+        {
+          "check_id": "CHECK-05",
+          "checked": 12,
+          "code": 1,
+          "finding_ids": [
+            "register:extra-row:walking-skeleton",
+            "register:missing-row:beta-artifact-1",
+            "register:missing-row:alpha-artifact-6",
+            "register:missing-row:beta-artifact-5",
+            "register:missing-row:beta-artifact-3",
+            "register:missing-row:alpha-artifact-1",
+            "register:missing-row:beta-artifact-4",
+            "register:missing-row:alpha-artifact-2",
+            "register:missing-row:beta-artifact-2",
+            "register:missing-row:example-cache-benchmark",
+            "register:missing-row:alpha-artifact-5",
+            "register:missing-row:alpha-artifact-4",
+            "register:missing-row:alpha-artifact-3"
+          ],
+          "floor": 1,
+          "found": 13,
+          "listed": 14,
+          "not_examined": 2,
+          "note": "expected 12, found 1 | built 2 of 14, pending 12, rows 1 of 12 | excluded: 2 (reasons recorded) | artifacts-root=/path/to slugs-probed=14",
+          "source": "module:check_05.py",
+          "verdict": "FAIL",
+          "waived": 0
+        },
+        {
+          "check_id": "CHECK-06",
+          "checked": 0,
+          "code": 2,
+          "finding_ids": [],
+          "floor": 1,
+          "found": 0,
+          "listed": 99,
+          "not_examined": 99,
+          "note": "no results file under example-cache-benchmark/results carries a figure or a measurement, so there is nothing here that needs a run record behind it. REPAIR: run the measurement through runmeta.start_run and finish_run, which write the record this check looks for.",
+          "source": "module:check_06.py",
+          "verdict": "DID-NOT-RUN",
+          "waived": 0
+        },
+        {
+          "check_id": "CHECK-07",
+          "checked": 100,
+          "code": 1,
+          "finding_ids": [
+            "worktree:not-a-work-tree"
+          ],
+          "floor": 1,
+          "found": 1,
+          "listed": 100,
+          "not_examined": 0,
+          "note": "work-tree=NO commits=0 results-on-disk=100 | tracked-ness not-evaluated (the artifact is not a work tree of its own, so `git ls-files` here would answer about another repository's index rather than this artifact's)",
+          "source": "module:check_07.py",
+          "verdict": "FAIL",
+          "waived": 0
+        },
+        {
+          "check_id": "CHECK-08",
+          "checked": 3,
+          "code": 1,
+          "finding_ids": [
+            "pins:image-without-digest:app/Dockerfile:1"
+          ],
+          "floor": 1,
+          "found": 1,
+          "listed": 6,
+          "not_examined": 3,
+          "note": "pull-sites checked 2 file(s), provenance entries not-examined 3 | references=3 (specifiers=0 images=3 text=0) | requirements=0 compose=1 dockerfile=1 drivers=excluded | dirs visited=4 pruned=2 (0 broken-*)",
+          "source": "module:check_08.py",
+          "verdict": "FAIL",
+          "waived": 0
+        },
+        {
+          "check_id": "CHECK-09",
+          "checked": 0,
+          "code": 2,
+          "finding_ids": [],
+          "floor": 1,
+          "found": 0,
+          "listed": 0,
+          "not_examined": 0,
+          "note": "no claim table names a bullet id and no figure carries a canon_bullet, so there are ZERO bullet references to examine. A check over zero references cannot fail, so it must not be allowed to report success. REPAIR: fill in the claim-under-test block from the skeleton.",
+          "source": "module:check_09.py",
+          "verdict": "DID-NOT-RUN",
+          "waived": 0
+        },
+        {
+          "check_id": "CHECK-20",
+          "checked": 1,
+          "code": 1,
+          "finding_ids": [
+            "backing:marker-present:example-beta:P5-B3"
+          ],
+          "floor": 1,
+          "found": 1,
+          "listed": 2,
+          "not_examined": 1,
+          "note": "built slugs 2, of which 1 under obligation | obligations 1 | live-store=/path/to/information records=/path/to/toolkit/_records/corrections | 1 built slug(s) map to no claim: example-search-benchmark",
+          "source": "module:check_20.py",
+          "verdict": "FAIL",
+          "waived": 0
+        },
+        {
+          "check_id": "CHECK-10",
+          "checked": 0,
+          "code": 2,
+          "finding_ids": [],
+          "floor": 1,
+          "found": 0,
+          "listed": 0,
+          "not_examined": 0,
+          "note": "sources=0 working=0 committed=0 honoured=0 uncommitted=0 malformed=0 (no committed copy resolved)",
+          "source": "runner:conformance.py",
+          "verdict": "DID-NOT-RUN",
+          "waived": 0
+        },
+        {
+          "check_id": "CHECK-11",
+          "checked": 11,
+          "code": 0,
+          "finding_ids": [],
+          "floor": 1,
+          "found": 0,
+          "listed": 11,
+          "not_examined": 0,
+          "note": "inspected=11 population-absent=0 pass-over-zero=0 banned-verdict=0 verdict-code-mismatch=0 (this check is not its own witness)",
+          "source": "runner:conformance.py",
+          "verdict": "PASS",
+          "waived": 0
+        }
+      ],
+      "code": 1,
+      "guards": [
+        {
+          "code": 0,
+          "guard_id": "GUARD-BANNED-SPELLING",
+          "note": "the banned results-record spelling (the banned-spelling rule) is absent"
+        }
+      ],
+      "refusal": "",
+      "summary": {
+        "did_not_run": 7,
+        "finding": 4,
+        "guard_fail": 0,
+        "pass": 1,
+        "waived": 0
+      },
+      "waivers": {
+        "committed": 0,
+        "committed_resolved": false,
+        "declarations": 0,
+        "errors": [],
+        "honoured": 0,
+        "malformed": 0,
+        "uncommitted": 0,
+        "working": 0,
+        "working_present": false
+      }
+    }
+  ],
+  "checks": [
+    {
+      "check_id": "CHECK-01",
+      "checked": 0,
+      "code": 2,
+      "finding_ids": [],
+      "floor": 1,
+      "found": 0,
+      "listed": 0,
+      "not_examined": 0,
+      "note": "there is no results/figures.json under \\path\\to\\example-cache-benchmark, so there are zero figures to examine. REPAIR: run derive.py before the checker.",
+      "source": "module:check_01.py",
+      "verdict": "DID-NOT-RUN",
+      "waived": 0
+    },
+    {
+      "check_id": "CHECK-02",
+      "checked": 0,
+      "code": 2,
+      "finding_ids": [],
+      "floor": 1,
+      "found": 0,
+      "listed": 99,
+      "not_examined": 99,
+      "note": "no results file under example-cache-benchmark/results carries a machine-emitted started_at, so there is no machine side to compare a README date against. A date that agrees with nothing is not a date that agrees. REPAIR: run the measurement through runmeta.start_run, which stamps started_at and started_at_utc.",
+      "source": "module:check_02.py",
+      "verdict": "DID-NOT-RUN",
+      "waived": 0
+    },
+    {
+      "check_id": "CHECK-03",
+      "checked": 0,
+      "code": 2,
+      "finding_ids": [],
+      "floor": 1,
+      "found": 0,
+      "listed": 0,
+      "not_examined": 0,
+      "note": "README.md carries no artifact: region of any kind, so this is not a document this check addresses. A finding about a paragraph that was never read is not a finding. REPAIR: generate the artifact from the skeleton, which ships the paired regions.",
+      "source": "module:check_03.py",
+      "verdict": "DID-NOT-RUN",
+      "waived": 0
+    },
+    {
+      "check_id": "CHECK-04",
+      "checked": 0,
+      "code": 2,
+      "finding_ids": [],
+      "floor": 1,
+      "found": 0,
+      "listed": 99,
+      "not_examined": 99,
+      "note": "no results file under example-cache-benchmark/results records a started_at, so there is no measurement for a gate to have preceded. An ordering claim over nothing is not an ordering claim. REPAIR: run the measurement through runmeta.start_run, which stamps started_at and the gate token.",
+      "source": "module:check_04.py",
+      "verdict": "DID-NOT-RUN",
+      "waived": 0
+    },
+    {
+      "check_id": "CHECK-05",
+      "checked": 12,
+      "code": 1,
+      "finding_ids": [
+        "register:extra-row:walking-skeleton",
+        "register:missing-row:beta-artifact-1",
+        "register:missing-row:alpha-artifact-6",
+        "register:missing-row:beta-artifact-5",
+        "register:missing-row:beta-artifact-3",
+        "register:missing-row:alpha-artifact-1",
+        "register:missing-row:beta-artifact-4",
+        "register:missing-row:alpha-artifact-2",
+        "register:missing-row:beta-artifact-2",
+        "register:missing-row:example-cache-benchmark",
+        "register:missing-row:alpha-artifact-5",
+        "register:missing-row:alpha-artifact-4",
+        "register:missing-row:alpha-artifact-3"
+      ],
+      "floor": 1,
+      "found": 13,
+      "listed": 14,
+      "not_examined": 2,
+      "note": "expected 12, found 1 | built 2 of 14, pending 12, rows 1 of 12 | excluded: 2 (reasons recorded) | artifacts-root=/path/to slugs-probed=14",
+      "source": "module:check_05.py",
+      "verdict": "FAIL",
+      "waived": 0
+    },
+    {
+      "check_id": "CHECK-06",
+      "checked": 0,
+      "code": 2,
+      "finding_ids": [],
+      "floor": 1,
+      "found": 0,
+      "listed": 99,
+      "not_examined": 99,
+      "note": "no results file under example-cache-benchmark/results carries a figure or a measurement, so there is nothing here that needs a run record behind it. REPAIR: run the measurement through runmeta.start_run and finish_run, which write the record this check looks for.",
+      "source": "module:check_06.py",
+      "verdict": "DID-NOT-RUN",
+      "waived": 0
+    },
+    {
+      "check_id": "CHECK-07",
+      "checked": 100,
+      "code": 1,
+      "finding_ids": [
+        "worktree:not-a-work-tree"
+      ],
+      "floor": 1,
+      "found": 1,
+      "listed": 100,
+      "not_examined": 0,
+      "note": "work-tree=NO commits=0 results-on-disk=100 | tracked-ness not-evaluated (the artifact is not a work tree of its own, so `git ls-files` here would answer about another repository's index rather than this artifact's)",
+      "source": "module:check_07.py",
+      "verdict": "FAIL",
+      "waived": 0
+    },
+    {
+      "check_id": "CHECK-08",
+      "checked": 3,
+      "code": 1,
+      "finding_ids": [
+        "pins:image-without-digest:app/Dockerfile:1"
+      ],
+      "floor": 1,
+      "found": 1,
+      "listed": 6,
+      "not_examined": 3,
+      "note": "pull-sites checked 2 file(s), provenance entries not-examined 3 | references=3 (specifiers=0 images=3 text=0) | requirements=0 compose=1 dockerfile=1 drivers=excluded | dirs visited=4 pruned=2 (0 broken-*)",
+      "source": "module:check_08.py",
+      "verdict": "FAIL",
+      "waived": 0
+    },
+    {
+      "check_id": "CHECK-09",
+      "checked": 0,
+      "code": 2,
+      "finding_ids": [],
+      "floor": 1,
+      "found": 0,
+      "listed": 0,
+      "not_examined": 0,
+      "note": "no claim table names a bullet id and no figure carries a canon_bullet, so there are ZERO bullet references to examine. A check over zero references cannot fail, so it must not be allowed to report success. REPAIR: fill in the claim-under-test block from the skeleton.",
+      "source": "module:check_09.py",
+      "verdict": "DID-NOT-RUN",
+      "waived": 0
+    },
+    {
+      "check_id": "CHECK-20",
+      "checked": 1,
+      "code": 1,
+      "finding_ids": [
+        "backing:marker-present:example-beta:P5-B3"
+      ],
+      "floor": 1,
+      "found": 1,
+      "listed": 2,
+      "not_examined": 1,
+      "note": "built slugs 2, of which 1 under obligation | obligations 1 | live-store=/path/to/information records=/path/to/toolkit/_records/corrections | 1 built slug(s) map to no claim: example-search-benchmark",
+      "source": "module:check_20.py",
+      "verdict": "FAIL",
+      "waived": 0
+    },
+    {
+      "check_id": "CHECK-10",
+      "checked": 0,
+      "code": 2,
+      "finding_ids": [],
+      "floor": 1,
+      "found": 0,
+      "listed": 0,
+      "not_examined": 0,
+      "note": "sources=0 working=0 committed=0 honoured=0 uncommitted=0 malformed=0 (no committed copy resolved)",
+      "source": "runner:conformance.py",
+      "verdict": "DID-NOT-RUN",
+      "waived": 0
+    },
+    {
+      "check_id": "CHECK-11",
+      "checked": 11,
+      "code": 0,
+      "finding_ids": [],
+      "floor": 1,
+      "found": 0,
+      "listed": 11,
+      "not_examined": 0,
+      "note": "inspected=11 population-absent=0 pass-over-zero=0 banned-verdict=0 verdict-code-mismatch=0 (this check is not its own witness)",
+      "source": "runner:conformance.py",
+      "verdict": "PASS",
+      "waived": 0
+    }
+  ],
+  "code": 1,
+  "discovered": {
+    "declared": 10,
+    "found": 10,
+    "ids": [
+      "CHECK-01",
+      "CHECK-02",
+      "CHECK-03",
+      "CHECK-04",
+      "CHECK-05",
+      "CHECK-06",
+      "CHECK-07",
+      "CHECK-08",
+      "CHECK-09",
+      "CHECK-20"
+    ],
+    "missing_ids": []
+  },
+  "generated_at": "2026-09-17T04:59:43.577312-05:00",
+  "mode": "artifact",
+  "runner_check_ids": [
+    "CHECK-10",
+    "CHECK-11"
+  ],
+  "scan": null,
+  "schema": "canonkit/report",
+  "schema_version": "canonkit/1",
+  "summary": {
+    "checked_artifacts": 1,
+    "did_not_run": 7,
+    "expected_artifacts": 1,
+    "extras": 0,
+    "finding": 4,
+    "guard_fail": 0,
+    "pass": 1,
+    "waived": 0
+  },
+  "tool": "conformance",
+  "tool_schema": "canonkit/conformance/1"
+}

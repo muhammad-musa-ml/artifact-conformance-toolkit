@@ -1,0 +1,413 @@
+CHECK-07 -- THE RED TRANSCRIPT
+===========================================
+
+WHAT CHECK-07 REQUIRES, verbatim from the project requirements document:
+
+    Fails when the artifact is not a git work tree, has zero commits, or has no
+    tracked machine-written file under `results/` -- verified with
+    `git ls-files`, not with "the file exists"
+
+THIS CHECK IS THE TRUE ROOT, AND ZERO OF FOURTEEN SLUGS PASS IT TODAY
+-----------------------------------------------------------------------
+Measured and recorded in the shared pattern note: `ls -d <artifact>/.git` fails with the
+shell's absent-path error for BOTH artifacts that existed before this programme
+did. Neither is a repository. Four other checks are unsatisfiable until that is
+fixed, and an earlier round owns the fix. This module is not reporting a surprise -- it is
+the thing that makes an already-known absence countable.
+
+(That error's exact wording is DESCRIBED rather than quoted here, deliberately.
+It is one of the five shapes the false-RED sweep hunts for, and a transcript that
+reproduced it in its own prose would trip the gate it exists to satisfy. The
+first draft of this file did quote it, and passed the sweep only because the
+line-wrap happened to split the phrase across two lines -- grep is line-based.
+A gate that passes on an accident of formatting is not a gate, so the quotation
+was removed rather than the line-break relied upon.)
+
+THE LITERAL READING OF THE REQUIREMENT IS TOO WEAK, AND THAT IS MEASURED
+--------------------------------------------------------------------------
+"no tracked machine-written file under results/" is satisfied by ONE such file,
+and results/figures.json is always the first to qualify. an earlier plan measured what
+that costs, inside a generated artifact after a full run:
+
+    git -C <artifact> check-ignore -v results/raw/run-0001.json
+      -> .gitignore:56:raw/      results/raw/run-0001.json
+
+    git ls-files results/  ->  results/RESULTS.md
+                               results/figures.json
+                               results/gate.json
+                               (and ZERO per-item records)
+
+The artifact's own ignore rules swallowed results/raw/, where the per-item run
+records live. The rule `raw/` sits in a licence block whose job is keeping SOURCE
+CORPORA out of the index, and a bare directory pattern matches at ANY DEPTH, so
+two different meanings of the word "raw" collided.
+
+What makes that a known hazard rather than a typo is the direction of the failure. Nothing
+went red. The chain this programme exists to prove is
+
+    per-item records -> count(predicate) -> numerator -> / denominator
+    -> rendered
+
+and verify.py re-walks it. With the records outside the index, a reader who
+clones the artifact holds the CONCLUSION and none of the EVIDENCE, and
+`verify.py --tier derive` on that clone re-derives over ZERO items. an earlier round
+re-runs every artifact from exactly that clean checkout. And CHECK-07, in its
+literal form, PASSED -- because figures.json was tracked. The check was green
+while the property it stands for was broken.
+
+So this module asserts the PROPERTY, not the PROXY. An artifact carrying a
+TRACKED figures.json must also carry its per-item records in the index. Two
+failure modes, two finding ids, because they have two different repairs:
+`records-untracked` (they are on disk and git is ignoring them -- and the check
+runs `git check-ignore -v` and NAMES THE RULE AND LINE, because that one line is
+the whole diagnosis) and `records-absent` (there are none at all).
+
+THE PIN THAT KEEPS THE REPAIR IN PLACE IS IN THE SUITE, NOT IN THIS FILE
+--------------------------------------------------------------------------
+`test_the_live_template_gitignore_does_not_swallow_the_per_item_records` builds a
+throwaway repository carrying templates/.gitignore VERBATIM, writes a per-item
+record, a figures record, three source-corpus files and a frozen id list, runs
+`git add -A`, and reads the INDEX. It asserts the record went in, the three
+corpora stayed out and the id list went in -- both directions, because a negation
+that admitted everything would satisfy the admission half and defeat the licence
+rule it sits beside.
+
+That test measures the LIVE TEMPLATE'S BEHAVIOUR, not its text, so it fails the
+moment the scoped negation is reverted. It PASSES in the capture below, and that
+is correct: it is a property of the template, not of this check's verdict, so it
+was never going to be one of the RED lines. It is named here so a reader looking
+for a known hazard's guard does not go looking in the wrong list.
+
+A DIRECTORY NESTED IN ANOTHER REPOSITORY IS NOT A WORK TREE
+-------------------------------------------------------------
+`git rev-parse --is-inside-work-tree` answers TRUE for any directory beneath any
+repository. The committed fixture must NOT be a work tree while living inside one
+that is, so omitting a nested .git is not enough on its own -- a naive branch one
+would walk up, find this repository, and report the fixture as a perfectly good
+work tree. The module compares `git rev-parse --show-toplevel` against the
+artifact directory and treats "inside a work tree whose root is somewhere else"
+as NOT a work tree, naming the enclosing toplevel.
+
+It then declines to evaluate the tracked-ness branches at all, and prints
+`tracked-ness not-evaluated` with the reason. Those branches would be measuring
+the ENCLOSING repository's index -- and the fixture's files genuinely ARE tracked
+by artifact-conformance-toolkit, so a check that reported that would print a reassuring
+truth about an artifact with no version control whatsoever.
+
+WHAT MAKES THIS A REAL RED RATHER THAN A MISSING FILE
+------------------------------------------------------
+tools/checks/check_07.py was REGISTERED AND RUNNABLE when this was captured.
+Discovery found it. It ran git, resolved the work tree, measured the enclosing
+toplevel, counted the commits, listed the index, counted the per-item records on
+disk and in the index, read the ignore rule swallowing them out of
+`git check-ignore -v`, reported a population and wrote a structured report. ONE
+function was stubbed:
+
+    worktree_findings()   returns no finding, whatever it is handed
+
+READ THE QUOTED POPULATION LINE IN THE FIXTURE FAILURE. It says
+
+    CHECK-07  PASS  found=0 checked=5 of 5 skipped=0 floor=1 waived=0
+    work-tree=NO commits=0 results-on-disk=5 | tracked-ness not-evaluated (...)
+    | enclosing-toplevel=...
+
+The check MEASURED that this is not a work tree. It printed `work-tree=NO`. It
+named the enclosing toplevel. It counted five files under results/. And it
+printed PASS on the same line. That is precisely the shape a false RED cannot
+demonstrate: the inputs were real, the measurement happened, the facts are right,
+and only the verdict is wrong.
+
+A FALSE RED FIRED DURING THIS CAPTURE AND IS RECORDED HERE RATHER THAN QUIETLY
+REPAIRED -- AND IT IS THE FOURTH INSTANCE OF ONE SHAPE IN THIS PHASE
+-------------------------------------------------------------------------------
+The first capture held NINE failures. The ninth was
+test_the_check_asks_git_rather_than_the_filesystem_about_version_control, and it
+failed like this:
+
+    check_07.py asks the filesystem about .git on 1 line(s):
+      ["# git, by subprocess. Never os.path.exists('.git')."]
+
+THE GUARD MATCHED ITS OWN PROHIBITION COMMENT. The line whose entire purpose is
+to say "never do this" was itself the violation the guard reported. Nothing in
+the module does what the guard was hunting for; the guard could not tell a live
+call from a sentence describing one.
+
+This is the shape that has now bitten four times in this phase: an earlier plan's hook
+check matched `exit 0` in its own comment; an earlier plan's `startswith("canonkit.")`
+matched the FILENAME and produced 26 confident false findings; an earlier plan's RED
+transcript failed its own gate by pasting the pattern it documented. The repair
+here is the one an earlier plan made -- replace the text match with a STRUCTURAL predicate.
+`executable_lines()` blanks comments with `tokenize` and docstrings with `ast`,
+preserving line numbers, so what the guard scans is code and only code. It trims
+a TRAILING comment rather than blanking the line beside it, because a stripper
+that blanked whole lines would hide a real violation that happened to carry one;
+`test_executable_lines_blanks_a_comment_but_keeps_the_code_beside_it` asserts
+exactly that, so the helper the guard rests on is itself checked rather than
+trusted.
+
+The needle set that detects a false RED is DELIBERATELY NOT PASTED HERE. A
+transcript quoting its own needles would match that sweep against its own prose
+and fail the gate it exists to satisfy, and the natural repair -- excluding this
+file from the sweep -- would put a hole exactly where the guard belongs. The
+pattern lives in the plan's acceptance criteria. It returned 0 against the raw
+pytest output below, before that output was framed, and 0 against this file.
+
+THE POPULATION THIS RUN COVERED, STATED RATHER THAN ASSUMED
+-------------------------------------------------------------
+Twenty-two tests COLLECTED. The committed fixture holds five files under
+results/, three of them per-item records, and all seven of its files are in the
+index -- which is itself asserted, because a fixture git never saw is a fixture a
+fresh clone does not have.
+
+CAPTURED
+--------
+  command      .venv/Scripts/python.exe -m pytest tools/tests/test_check_07.py -q
+  cwd          the agent worktree root
+  interpreter  CPython 3.12.11, pytest 9.1.1
+  parent HEAD  27fcae2 (the CHECK-05 GREEN commit)
+  redirection  > .reports/p0111-RED-check07.txt 2>&1   (never a pipe: a command
+               piped into another process returns the PIPE's exit status, not
+               the command's)
+
+VERBATIM OUTPUT
+---------------
+FF.FF..FF....F..F.....                                                   [100%]
+================================== FAILURES ===================================
+_____ test_a_standalone_directory_with_no_git_anywhere_is_not_a_work_tree _____
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5899/test_a_standalone_directory_wi0')
+
+    def test_a_standalone_directory_with_no_git_anywhere_is_not_a_work_tree(tmp_path):
+        root = plain_artifact(Path(tmp_path) / "loose")
+        result = run_check(root, report=tmp_path / "loose.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tree=NO commits=0 results-on-disk=5 | tracked-ness not-evaluated (the artifact is not a work tree of its own, so `git ls-files` here would answer about another repository's index rather than this artifact's)
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout="CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tr..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-96yh_vno')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_07.py:156: AssertionError
+________ test_a_directory_nested_in_this_repository_is_not_a_work_tree ________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5899/test_a_directory_nested_in_thi0')
+
+    def test_a_directory_nested_in_this_repository_is_not_a_work_tree(tmp_path):
+        """`git rev-parse --is-inside-work-tree` answers TRUE for any directory
+        beneath any repository, so omitting a nested .git is not enough on its own.
+        The message must NAME the enclosing toplevel."""
+        nested = plain_artifact(REPO_ROOT / ".reports" / "nested-probe-07")
+        try:
+            result = run_check(nested, report=tmp_path / "nested.json")
+>           assert result.exit_code == core.EXIT_FINDING, result.stdout
+E           AssertionError: CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tree=NO commits=0 results-on-disk=5 | tracked-ness not-evaluated (the artifact is not a work tree of its own, so `git ls-files` here would answer about /path/to/toolkit/agent-worktrees/worktrees/agent-a195197c8c413b807's index rather than this artifact's) | enclosing-toplevel=/path/to/toolkit/agent-worktrees/worktrees/agent-a195197c8c413b807
+E             
+E           assert 0 == 1
+E            +  where 0 = CliResult(exit_code=0, stdout="CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tr..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-9ug1u202')).exit_code
+E            +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_07.py:169: AssertionError
+__________ test_a_work_tree_with_zero_commits_is_a_distinct_finding ___________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5899/test_a_work_tree_with_zero_com0')
+
+    def test_a_work_tree_with_zero_commits_is_a_distinct_finding(tmp_path):
+        root = repo_artifact(tmp_path, name="uncommitted", commit=False)
+        result = run_check(root, report=tmp_path / "zero.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tree=yes commits=0 results-on-disk=5 | tracked-under-results=5 of 5 machine-written=2 per-item-records on-disk=3 tracked=3
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tr..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-eauo7ncx')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_07.py:201: AssertionError
+______ test_the_same_bytes_yield_a_finding_untracked_and_a_pass_tracked _______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5899/test_the_same_bytes_yield_a_fi0')
+
+    def test_the_same_bytes_yield_a_finding_untracked_and_a_pass_tracked(tmp_path):
+        """The distinction the requirement names explicitly: verified with
+        `git ls-files`, not with "the file exists". Nothing about the files changes
+        between the two verdicts -- only whether git has seen them."""
+        root = repo_artifact(tmp_path, name="bytes", add=False, commit=False)
+        git(root, "commit", "-q", "--allow-empty", "-m", "chore: an empty root commit")
+    
+        before_bytes = (root / "results" / "figures.json").read_bytes()
+        untracked = run_check(root, report=tmp_path / "untracked.json")
+>       assert untracked.exit_code == core.EXIT_FINDING, untracked.stdout
+E       AssertionError: CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tree=yes commits=1 results-on-disk=5 | tracked-under-results=0 of 5 machine-written=0 per-item-records on-disk=3 tracked=0
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tr..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-yanf4tfs')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_07.py:222: AssertionError
+____ test_per_item_records_that_git_ignores_are_a_finding_naming_the_rule _____
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5899/test_per_item_records_that_git0')
+
+    def test_per_item_records_that_git_ignores_are_a_finding_naming_the_rule(tmp_path):
+        """a known hazard reproduced, and caught.
+    
+        The negation is stripped from a COPY of the live template -- never from the
+        template itself -- so this rebuilds the exact pre-repair state and asserts
+        CHECK-07 refuses it and names the rule doing the swallowing.
+        """
+        rules = TEMPLATE_GITIGNORE.read_text(encoding="utf-8")
+        reverted = "\n".join(
+            line for line in rules.splitlines()
+            if line.strip() not in ("!results/raw/", "!results/raw/**"))
+        assert reverted != rules, (
+            "the negation lines were not found in templates/.gitignore, so this test "
+            "did not reconstruct the pre-repair state and asserts nothing")
+    
+        root = repo_artifact(tmp_path, name="swallowed", gitignore=reverted)
+        result = run_check(root, report=tmp_path / "swallowed.json")
+    
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tree=yes commits=1 results-on-disk=5 | tracked-under-results=2 of 5 machine-written=2 per-item-records on-disk=3 tracked=0 | ignored-by=.gitignore:56:raw/
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tr..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-ow3f2m4s')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_07.py:327: AssertionError
+_____ test_a_tracked_figures_record_with_no_per_item_records_is_a_finding _____
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5899/test_a_tracked_figures_record_0')
+
+    def test_a_tracked_figures_record_with_no_per_item_records_is_a_finding(tmp_path):
+        """A figure is a claim about a population. With no records under
+        results/raw/, nothing under results/ holds the items it counted."""
+        root = repo_artifact(tmp_path, name="evidenceless", records=0)
+        result = run_check(root, report=tmp_path / "absent.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-07         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  work-tree=yes commits=1 results-on-disk=2 | tracked-under-results=2 of 2 machine-written=2 per-item-records on-disk=0 tracked=0
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-07         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  work-tr..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-xox95dcn')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_07.py:349: AssertionError
+_______ test_the_committed_fixture_fails_naming_the_enclosing_toplevel ________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5899/test_the_committed_fixture_fai0')
+
+    def test_the_committed_fixture_fails_naming_the_enclosing_toplevel(tmp_path):
+        fixture = conftest.broken_fixture(FIXTURE)
+        result = run_check(fixture, report=tmp_path / "fix.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tree=NO commits=0 results-on-disk=5 | tracked-ness not-evaluated (the artifact is not a work tree of its own, so `git ls-files` here would answer about /path/to/toolkit/agent-worktrees/worktrees/agent-a195197c8c413b807's index rather than this artifact's) | enclosing-toplevel=/path/to/toolkit/agent-worktrees/worktrees/agent-a195197c8c413b807
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout="CHECK-07         PASS        found=0 checked=5 of 5 skipped=0 floor=1 waived=0  work-tr..agent-worktrees/worktrees/agent-a195197c8c413b807'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-dhds06c7')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_07.py:476: AssertionError
+____________ test_the_anti_rot_pin_holds_for_the_known_bad_fixture ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5899/test_the_anti_rot_pin_holds_fo0')
+
+    def test_the_anti_rot_pin_holds_for_the_known_bad_fixture(tmp_path):
+        fixture = conftest.broken_fixture(FIXTURE)
+        expectation_path = fixture / EXPECTATION_FILE
+        assert expectation_path.is_file(), (
+            "%s carries no %s, so its RED evidence has nothing pinning it"
+            % (FIXTURE, EXPECTATION_FILE))
+        expected = json.loads(expectation_path.read_text(encoding="ascii"))
+    
+        result = run_check(fixture, report=tmp_path / "pin.json")
+        assert result.report is not None, "the check wrote no structured report"
+        missing = [field for field in PINNED_FIELDS if field not in result.report]
+        assert not missing, (
+            "the live report no longer carries %r. A renamed field would otherwise "
+            "make this pin compare nothing." % missing)
+        measured = {field: result.report[field] for field in PINNED_FIELDS}
+>       assert measured == expected, (
+            "the structured report drifted from its committed expectation.\n"
+            "  expected: %r\n  measured: %r" % (expected, measured))
+E       AssertionError: the structured report drifted from its committed expectation.
+E           expected: {'check_id': 'CHECK-07', 'checked': 5, 'code': 1, 'finding_ids': ['worktree:enclosed-by-other-toplevel'], 'found': 1, 'schema_version': 'canonkit/1'}
+E           measured: {'check_id': 'CHECK-07', 'code': 0, 'found': 0, 'checked': 5, 'finding_ids': [], 'schema_version': 'canonkit/1'}
+E       assert {'check_id': ...cked': 5, ...} == {'check_id': ...plevel'], ...}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Differing items:
+E         {'code': 0} != {'code': 1}
+E         {'finding_ids': []} != {'finding_ids': ['worktree:enclosed-by-other-toplevel']}
+E         {'found': 0} != {'found': 1}
+E         Use -v to get more diff
+
+tools\tests\test_check_07.py:538: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_check_07.py::test_a_standalone_directory_with_no_git_anywhere_is_not_a_work_tree
+FAILED tools/tests/test_check_07.py::test_a_directory_nested_in_this_repository_is_not_a_work_tree
+FAILED tools/tests/test_check_07.py::test_a_work_tree_with_zero_commits_is_a_distinct_finding
+FAILED tools/tests/test_check_07.py::test_the_same_bytes_yield_a_finding_untracked_and_a_pass_tracked
+FAILED tools/tests/test_check_07.py::test_per_item_records_that_git_ignores_are_a_finding_naming_the_rule
+FAILED tools/tests/test_check_07.py::test_a_tracked_figures_record_with_no_per_item_records_is_a_finding
+FAILED tools/tests/test_check_07.py::test_the_committed_fixture_fails_naming_the_enclosing_toplevel
+FAILED tools/tests/test_check_07.py::test_the_anti_rot_pin_holds_for_the_known_bad_fixture
+8 failed, 14 passed in 6.57s
+
+EXIT=1
+
+The exit code above is the pytest process's own, read from $? immediately after
+the redirection.
+
+8 failed, 14 passed, 22 collected. The fourteen passes are the assertions a check
+with its detection stubbed out satisfies HONESTLY, and they are what make the
+eight failures readable as a DISCRIMINATION result rather than as a module that
+does not work:
+
+  THE KNOWN-HAZARD PIN: the live templates/.gitignore does not swallow the per-item
+    records, AND still keeps raw/, data/ and corpus/ source trees out of the
+    index, AND still admits the frozen id lists
+  tracked-ness is NOT evaluated when the work-tree branch fires, and the reason
+    prints
+  the records branch is gated on a tracked figures record, so an artifact with
+    no figures record gets the no-tracked-results verdict and neither records id
+  a directory with no results/ at all is DID-NOT-RUN, with a refusal on stderr
+  the check asks git rather than the filesystem: no .exists(), and six git
+    subcommands present
+  executable_lines() blanks a comment and keeps the code beside it
+  the fixture's chain is re-walkable: count(ok) over its committed records equals
+    the figure's value, and the record count equals its denominator
+  every file in the fixture is tracked, including three under results/raw/
+  the committed expectation holds no wording-bearing field
+  the module satisfies the check protocol
+  discovery finds it with no protocol violation
+  the floor override prints and demotes
+  the population line carries the counts it measured
+  a complete tracked artifact passes
+
+THE EIGHT FAILURES, and what each one proves cannot be reached without the
+detection:
+
+  a standalone directory with no git anywhere is not a work tree
+  a directory nested in THIS repository is not a work tree, and the message
+    names the enclosing toplevel                      -- the fixture-vs-disk gap
+  a work tree with zero commits is a DISTINCT finding
+  the same bytes yield a finding untracked and a pass tracked
+                                                      -- the requirement's own
+                                                         "not with the file
+                                                         exists"
+  per-item records that git ignores are a finding, and the finding NAMES THE
+    RULE doing the swallowing                         -- a known hazard, reproduced and
+                                                         caught
+  a tracked figures record with no per-item records at all is a finding
+  the committed fixture fails with exactly ONE finding -- the fixture
+                                                          discriminates
+  the anti-rot pin holds for that fixture             -- a design rule's second half
+
+The fourth is the requirement stated as an experiment: the SAME BYTES are on disk
+in both runs, the test asserts they are byte-identical between them, and the only
+thing that changes is whether git has seen them. Existence and tracked-ness are
+demonstrated as two different verdicts rather than argued to be different.
+
+The fifth is a known hazard rebuilt in a temp repository. The negation is stripped from a
+COPY of the live template -- never from the template itself -- so the pre-repair
+state is reconstructed exactly, and the test asserts that figures.json is STILL
+TRACKED in that state. That assertion is the point: the proxy is satisfied while
+the property is broken, which is precisely how this defect survived.

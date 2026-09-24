@@ -1,0 +1,5 @@
+This directory exists so the fixture's only defect is its missing
+register row. tools/manifest.json marks this slug `status: built`,
+and the status rule makes a built slug whose DIRECTORY IS MISSING a
+finding. Without this file the fixture would carry two defects and
+"CHECK-05 refused it" could not say which one did the refusing.

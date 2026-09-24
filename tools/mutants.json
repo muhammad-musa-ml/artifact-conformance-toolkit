@@ -1,0 +1,154 @@
+{
+  "mutants": [
+    {
+      "expected_exit": 1,
+      "id": "M-01",
+      "operation": "flip_bool",
+      "operation_note": "The field defaults to the first boolean in sort order rather than a hard-coded name, so this entry addresses a real artifact whose predicate is called something else. The field actually flipped is PRINTED.",
+      "owning_guard": [
+        "verify:chain"
+      ],
+      "probes": [
+        "verify:chain",
+        "verify:token",
+        "render:check",
+        "CHECK-01",
+        "CHECK-03"
+      ],
+      "target": "results/raw/items/*.json",
+      "why": "a success criterion's headline. The flattering error it closes: a figures.json that LOOKS derived while nothing re-walks the chain back to the records behind it -- every link downstream (README, register row, published claim) then ships a confidently wrong number. The falsifiable bound is that changing ONE per-item record must propagate through count(predicate) to the rendered figure and make verify.py exit 1; measured, it re-derives items_ok to 5.0 against a claimed 6.0 over 8 records. If the chain were short-circuited anywhere this mutant would pass SILENTLY, which is the entire reason it exists. The tempting repair -- widening verify's tolerance until the run passes -- would be the real error: a guard tuned to pass measures nothing."
+    },
+    {
+      "expected_exit": 1,
+      "id": "M-02",
+      "key": "mean_latency_ms",
+      "operation": "mangle_rendered_hole",
+      "operation_note": "`key` names one of THIS artifact's figures, so the mutation alters a rendered FIGURE rather than whichever hole happens to come first -- the first hole in the generated README is dated_at, a metadata value that would prove something weaker.",
+      "owning_guard": [
+        "render:check"
+      ],
+      "probes": [
+        "verify:chain",
+        "verify:token",
+        "render:check",
+        "CHECK-01",
+        "CHECK-03"
+      ],
+      "target": "README.md",
+      "why": "A hand edit to a published number. The flattering error: a README whose figure was corrected, improved or simply typed over after rendering, while figures.json -- the only place a number may be authored -- still holds the derived value, so every re-derivation keeps agreeing with itself and the document nobody re-renders is the one the interviewer reads. The falsifiable bound is a BYTE comparison, not a timestamp: ordinary copies preserve mtime, so a stale document looks fresh. Refusing the tempting repair: re-rendering to make the check pass would destroy the very edit the tool exists to report, which is why a design rule makes reporting the default and withholds any override."
+    },
+    {
+      "expected_exit": 2,
+      "expected_exit_note": "2, from render:check -- the first owning guard in `probes` order. CHECK-01 fires beside it at exit 1.",
+      "id": "M-03",
+      "measured_correction": "The plan predicted `derive:refuse` and CHECK-01. MEASURED, derive does NOT refuse: it re-authors figures.json from the per-item records, so the dropped population is simply recomputed. `render:check` is the guard that actually fires beside CHECK-01. derive:refuse is exercised by M-06 instead.",
+      "operation": "drop_key",
+      "overlap": "TWO guards legitimately catch this one, so the list names BOTH. That is a DATA change, not a relaxed rule: the run still FAILS when the guard that fires is outside this list. render REFUSES at exit 2 (prevention: a figure with no population cannot reach a document) and CHECK-01 FAILS at exit 1 (detection: a README can be hand-written or inherited from before the rule existed). Neither is redundant.",
+      "owning_guard": [
+        "render:check",
+        "CHECK-01"
+      ],
+      "path": [
+        "figures",
+        "*",
+        "population"
+      ],
+      "probes": [
+        "verify:chain",
+        "verify:token",
+        "render:check",
+        "CHECK-01",
+        "CHECK-03"
+      ],
+      "target": "results/figures.json",
+      "why": "The 0/0 pass wearing a figure's clothes. The flattering error: a figure over zero inputs measured nothing, yet every count derived from it downstream reads as a result -- and unlike a wrong number, a missing denominator makes the claim unfalsifiable rather than false. The falsifiable bound is an integer population of at least 1 (population 1 is LEGAL and renders: peak VRAM and free VRAM at run start are legitimately single-sample population facts, and requiring a written excuse for every n=1 figure would be a constraint nobody asked for). The tempting repair -- defaulting a missing population to the record count -- would manufacture the exact denominator the check exists to demand be stated."
+    },
+    {
+      "expected_exit": 1,
+      "id": "M-04",
+      "operation": "mangle_string",
+      "operation_note": "Length-preserving: a TRUNCATED token and a WRONG token are different claims, and only the second is what this guard exists to catch.",
+      "owning_guard": [
+        "verify:token"
+      ],
+      "path": [
+        "gate_token"
+      ],
+      "probes": [
+        "verify:chain",
+        "verify:token",
+        "render:check",
+        "CHECK-01",
+        "CHECK-03"
+      ],
+      "target": "results/figures.json",
+      "why": "Results produced under a gate that has since changed. The flattering error: figures that re-derive perfectly from records a DIFFERENT gate authorised -- every arithmetic check passes, because the arithmetic was never the problem. The token is minted over gate CONTENT, so it moves the moment any assertion changes; that is the falsifiable bound, and it is why verify.py compares the token BEFORE re-deriving anything. Re-deriving first would compute a correct number from unauthorised records and report it as verified. The tempting repair -- re-running the gate to mint a matching token -- would make every stale result permanently self-consistent."
+    },
+    {
+      "body": "TODO(artifact:limits): replace this paragraph before any figure is published.\nThis placeholder is the skeleton's own text. It is here to be refused.\n",
+      "body_sha256": "9c0056098163d3cfc0a0a9694665bd2cfd79a38aeaa82d720fce82360efcd0a3",
+      "expected_exit": 1,
+      "id": "M-05",
+      "operation": "replace_region_body",
+      "operation_note": "`body` is READ from templates/README-SKELETON.md, never typed, and `body_sha256` is pinned to CHECK-03's own committed literal by a test. A copied literal nobody checks is how a mutant quietly stops expressing the condition it names.",
+      "owning_guard": [
+        "CHECK-03"
+      ],
+      "probes": [
+        "verify:chain",
+        "verify:token",
+        "render:check",
+        "CHECK-01",
+        "CHECK-03"
+      ],
+      "region": "limits",
+      "target": "README.md",
+      "why": "An unedited template copy must not pass. The flattering error is measured, not supposed: the inherited criterion was `grep -c \"What this does not show\" >= 1`, which an entirely unedited artifact satisfies perfectly -- a criterion a completely unedited artifact passes is not a weak check, it is an unrun one. Worse, the heading is not stable: the two artifacts that shipped before this program existed use two DIFFERENT limitations headings. The falsifiable bound is therefore the region ANCHOR plus a sha256 against the placeholder, never heading text. The tempting repair -- keying on whichever heading the artifact in front of you happens to use -- passes one artifact and fails the other."
+    },
+    {
+      "expected_exit": 2,
+      "id": "M-06",
+      "operation": "flip_bool",
+      "operation_note": "`passed` is the only boolean in a gate record, so the default first-boolean-in-sort-order resolves to it. require_gate reads `ok` with `passed` as the fallback, so either spelling is refused correctly.",
+      "owning_guard": [
+        "derive:refuse"
+      ],
+      "probes": [
+        "verify:chain",
+        "verify:token",
+        "render:check",
+        "CHECK-01",
+        "CHECK-03",
+        "derive:refuse"
+      ],
+      "target": "results/gate.json",
+      "why": "A number authored past a FAILED gate. The flattering error is the one no read-only guard here can see: MEASURED, all five read-only probes stay SILENT on this mutation -- the figures still re-derive, the document still matches, the population is still there. Only the authorship-time refusal catches it, which is exactly why prevention lives where the number is authored rather than in a checker that reads it later. The falsifiable bound is exit 2 with the canon's fallback wording quoted verbatim from the record. The tempting repair -- an override flag for 'I know the gate failed' -- is the escape hatch that empties the gate, and a design rule's answer is instead that a failed gate still MINTS its token so a measurement that ran anyway carries a poisoned one rather than none at all."
+    },
+    {
+      "expected_exit": 1,
+      "id": "M-07",
+      "operation": "drop_key",
+      "owning_guard": [
+        "verify:chain"
+      ],
+      "path": [
+        "figures",
+        "*",
+        "numerator"
+      ],
+      "probes": [
+        "verify:chain",
+        "verify:token",
+        "render:check",
+        "CHECK-01",
+        "CHECK-03"
+      ],
+      "target": "results/figures.json",
+      "why": "The second link of the chain, checked separately from the first. The flattering error: a figure whose VALUE re-derives correctly while the count(predicate) it was supposedly built from is absent or wrong -- the headline number agrees, so a check that compared only values would report the chain intact. M-01 breaks the records; this breaks the numerator with the records untouched, and the two together are what make 'verify.py walks the CHAIN, not the last link' falsifiable rather than decorative. The tempting repair -- recomputing a missing numerator from the value and the denominator -- would make the field decorative in precisely the way the mutation pretends it already is."
+    }
+  ],
+  "note": "Every owning_guard list here was MEASURED against a template-generated committed artifact, never predicted. Where a guard that was expected to fire did not, the entry records what actually fired and the plan's summary records the correction. A catalogue entry nobody executed is an inference filed as a measurement.",
+  "probe_set_note": "`probes` is the guard set actually RUN for an entry, and its length is printed beside the verdict. 'Caught by nothing' therefore means 'caught by none of the N probes run' with N stated. derive:refuse is absent from the read-only set because derive.py REWRITES results/figures.json on success and would overwrite a mutant mid-probe -- measured by test_derive_DESTROYS_a_figures_mutant_which_is_why_its_probe_is_scoped.",
+  "schema": "canonkit/mutants",
+  "schema_version": "canonkit/1"
+}

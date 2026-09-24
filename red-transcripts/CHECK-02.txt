@@ -1,0 +1,390 @@
+CHECK-02 -- THE RED TRANSCRIPT
+===========================================
+
+WHAT CHECK-02 REQUIRES, verbatim from the project requirements document:
+
+    Fails when the README date is absent, or does not equal the date component
+    of a machine-emitted `started_at` in a results file.
+
+WHY THIS CHECK HAD NOTHING TO COMPARE AGAINST UNTIL AN EARLIER PLAN
+----------------------------------------------------------------
+The date is the single easiest field in an artifact to TYPE rather than derive,
+and a typed date looks exactly like a derived one. The shared pattern note probed both
+shipped artifacts for started_at / finished_at / dated_at / isoformat and found
+exactly ONE hit, and that hit is a synthetic log document's field rather than a
+run stamp. So until the run-metadata emitter existed, this check had no machine
+side at all and could only ever have reported that a date looked like a date.
+
+That is why this module REFUSES rather than passes when it finds no machine
+stamp. "There was nothing to compare against" is not "the date agrees", and the
+distinction between those two is the one a design rule calls the most important in the
+checker.
+
+THE ASSERTION THIS WHOLE SUITE IS BUILT AROUND
+------------------------------------------------
+a design rule stores timestamps BOTH ways: `started_at` local with a real offset, and
+`started_at_utc` beside it. They can name DIFFERENT DAYS, and on this machine
+they routinely do. MEASURED while this check was written, one instant read two
+ways:
+
+    started_at       2026-09-15T19:57:50-05:00      the fifteenth
+    started_at_utc   2026-09-16T00:57:50+00:00      the sixteenth
+
+For roughly five hours of every day the two disagree about the date here. So
+WHICH FIELD THE CHECK READS IS THE CHECK. A version comparing against the UTC
+stamp would pass the tree this suite expects it to refuse and refuse the tree it
+expects it to pass, while every population number it printed stayed identical.
+test_the_comparison_is_against_the_local_date_not_the_utc_one asserts both
+directions, and the committed fixture is built on exactly that straddle.
+
+WHAT MAKES THIS A REAL RED RATHER THAN A MISSING FILE
+------------------------------------------------------
+a design rule requires the transcript to be captured BEFORE the implementation commit,
+with commit order as the evidence. The trap in that requirement is that "before
+the implementation" reads as "before any code exists", and a transcript captured
+then records a module that could not be loaded or an input that was never
+written. Each of those exits non-zero, each satisfies a naive "non-zero exit"
+acceptance test, and none of them says anything about whether the check
+DISCRIMINATES.
+
+So tools/checks/check_02.py was REGISTERED AND RUNNABLE when this was captured.
+Discovery found it, it walked results/, it excluded the gate record and the
+per-item records and counted both exclusions, it parsed every machine stamp, it
+located the artifact:date region, it extracted the rendered date, it counted the
+local-versus-UTC divergences, it reported a population and it wrote a structured
+report. ONE function was stubbed:
+
+    date_findings()   returns no finding, whatever the two dates say
+
+READ THE QUOTED POPULATION LINES IN THE FAILURES BELOW. The first says
+
+    CHECK-02  PASS  found=0 checked=1 of 2 skipped=1 floor=1 waived=0
+    readme-date=2026-01-01 machine-dates=1 (2026-09-15) results-files=1 of 2
+    utc-date-differs=1
+
+The check READ the rendered date. It READ the machine date. It even counted that
+the UTC counterpart falls on a different day. The two dates it printed side by
+side are nine months apart. And it printed PASS. That is precisely the shape a
+false RED cannot demonstrate: the inputs were real, the measurement happened,
+and only the verdict was wrong.
+
+THE FIXTURE, AND WHY IT IS A COMPLETE ARTIFACT RATHER THAN A STUB
+--------------------------------------------------------------------------
+fixtures/broken-artifacts/broken-readme-date-mismatch/ renders the day AFTER the
+day its machine recorded. Its run began at half past ten at night, local, on the
+fifteenth; the UTC counterpart of that same instant falls on the sixteenth. The
+README renders the sixteenth. The date was read off the wrong one of two fields
+that are both present, both well formed and both genuinely machine-written.
+
+A date typed at random would be caught by any comparison at all. This one is
+caught ONLY by a check that knows which of the two stored stamps it compares
+against -- a check reading `started_at_utc` reports this tree CLEAN.
+
+Everything else about the tree is correct on purpose: a passing gate whose
+dated_at precedes every measurement, a complete run record carrying both
+timestamp forms and all three cost fields, and a figures record whose figure
+carries its denominator. test_only_check_02_refuses_the_check_02_fixture runs
+CHECK-01 and CHECK-03 over it and asserts both PASS, so "the checker refused it"
+says WHICH checker did the refusing. That test passes in the run below.
+
+ONE TEST IN THIS SUITE WAS WRONG AND WAS REPAIRED BEFORE THIS CAPTURE, and the
+repair is recorded here rather than quietly made. The zero-input test originally
+asserted that the banned verdict word does not appear anywhere in stdout. It
+does appear -- canonkit.report prints `skipped=N` as a legitimate COUNT LABEL on
+the same line, and the banned word is banned as a VERDICT. A substring test over
+the whole line cannot tell a count label from a verdict, so it failed on a
+CORRECT refusal. That is the same shape as the guards an earlier plan had to withdraw:
+a check that matches its own vocabulary rather than the thing it is about. The
+assertion now reads the verdict COLUMN, and it passes in the run below, which is
+what makes its pass evidence rather than noise.
+
+REVIEW CRITERION FOR THIS FILE, stated so it can be checked rather than assumed:
+the failure lines below must name ASSERTIONS ON THE VERDICT. A transcript whose
+failure line instead names a failed module load, a collection failure, an absent
+input, or an argument parser rejecting a flag is a FALSE RED and must be
+rejected and recaptured. That is mechanically checkable with a case-insensitive
+grep over five shapes, and the plan states the pattern.
+
+THE PATTERN IS DELIBERATELY NOT PASTED HERE. A transcript that quoted its own
+needle set would match that grep against its own prose and fail the gate it
+exists to satisfy -- and the natural repair for that, excluding this file from
+the sweep, would put a hole exactly where the guard is supposed to be. The
+pattern lives in the plan's acceptance criteria. It returned 0 against the raw
+pytest output below, and against this assembled file.
+
+CAPTURED
+--------
+  command      .venv/Scripts/python.exe -m pytest tools/tests/test_check_02.py -q
+  cwd          the agent worktree for an earlier plan (paths below show it)
+  interpreter  CPython 3.12.11, pytest 9.1.1
+  parent HEAD  0d628de100e5b12025a5aa4cfb28eaccd5afdbc8
+  redirection  > .reports/p0110-RED-check02.txt 2>&1   (never a pipe: a command
+               piped into another process returns the PIPE's exit status, not
+               the command's)
+
+The VERBATIM OUTPUT below was concatenated from that redirected file rather than
+retyped, so no transcription step sits between the run and this record.
+
+VERBATIM OUTPUT
+---------------
+..FFFFFF....F.F..F                                                       [100%]
+================================== FAILURES ===================================
+________ test_a_date_that_disagrees_with_a_machine_stamp_is_a_finding _________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5891/test_a_date_that_disagrees_wit0')
+
+    def test_a_date_that_disagrees_with_a_machine_stamp_is_a_finding(tmp_path):
+        root = artifact(tmp_path, date_text="2026-01-01", slug="disagrees")
+        result = run_check(root, report=tmp_path / "disagrees.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-02         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  readme-date=2026-01-01 machine-dates=1 (2026-09-15) results-files=1 of 2 utc-date-differs=1
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-02         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  readme-..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-aap5c760')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_02.py:206: AssertionError
+___________________ test_an_absent_date_region_is_a_finding ___________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5891/test_an_absent_date_region_is_0')
+
+    def test_an_absent_date_region_is_a_finding(tmp_path):
+        """A machine recorded a date and the document does not carry it."""
+        root = artifact(tmp_path, include_date_region=False, slug="no-region")
+        result = run_check(root, report=tmp_path / "no-region.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-02         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  readme-date=ABSENT machine-dates=1 (2026-09-15) results-files=1 of 2 utc-date-differs=1
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-02         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  readme-..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-irasvt7s')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_02.py:215: AssertionError
+_________________ test_a_region_with_no_iso_date_is_a_finding _________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5891/test_a_region_with_no_iso_date0')
+
+    def test_a_region_with_no_iso_date_is_a_finding(tmp_path):
+        """The region is present and says nothing this check can compare."""
+        root = artifact(tmp_path, date_text="", slug="no-date")
+        result = run_check(root, report=tmp_path / "no-date.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-02         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  readme-date=ABSENT machine-dates=1 (2026-09-15) results-files=1 of 2 utc-date-differs=1
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-02         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  readme-..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-zr0zxohs')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_02.py:223: AssertionError
+______ test_a_malformed_date_in_the_region_is_absent_rather_than_a_crash ______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5891/test_a_malformed_date_in_the_r0')
+
+    def test_a_malformed_date_in_the_region_is_absent_rather_than_a_crash(tmp_path):
+        """2026-13-45 is well shaped and names no day. It is not a date."""
+        root = artifact(tmp_path, date_text="2026-13-45", slug="malformed")
+        result = run_check(root, report=tmp_path / "malformed.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-02         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  readme-date=ABSENT machine-dates=1 (2026-09-15) results-files=1 of 2 utc-date-differs=1
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-02         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  readme-..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-li3m1_2g')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_02.py:231: AssertionError
+___ test_the_absent_and_disagreeing_branches_produce_different_finding_ids ____
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5891/test_the_absent_and_disagreein0')
+
+    def test_the_absent_and_disagreeing_branches_produce_different_finding_ids(tmp_path):
+        """Collapsing them would name the problem without naming the repair."""
+        absent = run_check(artifact(tmp_path, include_date_region=False,
+                                    slug="absent-ids"),
+                           report=tmp_path / "absent-ids.json")
+        disagrees = run_check(artifact(tmp_path, date_text="2026-01-01",
+                                       slug="disagree-ids"),
+                              report=tmp_path / "disagree-ids.json")
+    
+        absent_ids = absent.report["finding_ids"]
+        disagree_ids = disagrees.report["finding_ids"]
+>       assert absent_ids, absent.report
+E       AssertionError: {'artifact': '\\home\\user\\AppData\\Local\\Temp\\pytest-of-user\\pytest-5891\\test_the_absent_and_disagreein0\\absent-ids', 'check_id': 'CHECK-02', 'checked': 1, 'code': 0, ...}
+E       assert []
+
+tools\tests\test_check_02.py:246: AssertionError
+________ test_the_comparison_is_against_the_local_date_not_the_utc_one ________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5891/test_the_comparison_is_against0')
+
+    def test_the_comparison_is_against_the_local_date_not_the_utc_one(tmp_path):
+        """One instant, two dates. Which field the check reads IS the check.
+    
+        A check comparing against started_at_utc would invert both assertions
+        below: it would pass the tree carrying the UTC date and refuse the tree
+        carrying the local one.
+        """
+        local = run_check(artifact(tmp_path, date_text=LOCAL_DATE, slug="local-date"),
+                          report=tmp_path / "local.json")
+        assert local.exit_code == core.EXIT_PASS, (
+            "the LOCAL date was refused, so the check is not comparing against "
+            "started_at\n%s" % local.stdout)
+    
+        utc = run_check(artifact(tmp_path, date_text=UTC_DATE, slug="utc-date"),
+                        report=tmp_path / "utc.json")
+>       assert utc.exit_code == core.EXIT_FINDING, (
+            "the UTC date PASSED, so the check is comparing against "
+            "started_at_utc rather than started_at\n%s" % utc.stdout)
+E       AssertionError: the UTC date PASSED, so the check is comparing against started_at_utc rather than started_at
+E         CHECK-02         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  readme-date=2026-09-16 machine-dates=1 (2026-09-15) results-files=1 of 2 utc-date-differs=1
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-02         PASS        found=0 checked=1 of 2 skipped=1 floor=1 waived=0  readme-..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-8sah6aa7')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_02.py:273: AssertionError
+______ test_the_committed_fixture_fails_and_names_every_disagreeing_file ______
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5891/test_the_committed_fixture_fai0')
+
+    def test_the_committed_fixture_fails_and_names_every_disagreeing_file(tmp_path):
+        fixture = conftest.broken_fixture(FIXTURE)
+        result = run_check(fixture, report=tmp_path / "fixture.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-02         PASS        found=0 checked=2 of 3 skipped=1 floor=1 waived=0  readme-date=2026-09-16 machine-dates=1 (2026-09-15) results-files=2 of 3 utc-date-differs=2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-02         PASS        found=0 checked=2 of 3 skipped=1 floor=1 waived=0  readme-..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-6smqns5p')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_02.py:376: AssertionError
+____________ test_the_anti_rot_pin_holds_for_the_known_bad_fixture ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5891/test_the_anti_rot_pin_holds_fo0')
+
+    def test_the_anti_rot_pin_holds_for_the_known_bad_fixture(tmp_path):
+        """a design rule's second half: the evidence must not rot while the checker drifts."""
+        fixture = conftest.broken_fixture(FIXTURE)
+        expectation_path = fixture / EXPECTATION_FILE
+        assert expectation_path.is_file(), (
+            "%s carries no %s, so its RED evidence has nothing pinning it"
+            % (FIXTURE, EXPECTATION_FILE))
+        expected = json.loads(expectation_path.read_text(encoding="ascii"))
+    
+        result = run_check(fixture, report=tmp_path / "pin.json")
+        assert result.report is not None, "the check wrote no structured report"
+        missing = [field for field in PINNED_FIELDS if field not in result.report]
+        assert not missing, (
+            "the live report no longer carries %r. A renamed field would otherwise "
+            "make this pin compare nothing." % missing)
+        measured = {field: result.report[field] for field in PINNED_FIELDS}
+>       assert measured == expected, (
+            "the structured report drifted from its committed expectation.\n"
+            "  expected: %r\n  measured: %r" % (expected, measured))
+E       AssertionError: the structured report drifted from its committed expectation.
+E           expected: {'check_id': 'CHECK-02', 'checked': 2, 'code': 1, 'finding_ids': ['date:disagrees:results/figures.json', 'date:disagrees:results/raw/run-0001.json'], 'found': 2, 'schema_version': 'canonkit/1'}
+E           measured: {'check_id': 'CHECK-02', 'code': 0, 'found': 0, 'checked': 2, 'finding_ids': [], 'schema_version': 'canonkit/1'}
+E       assert {'check_id': ...cked': 2, ...} == {'check_id': ...1.json'], ...}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Differing items:
+E         {'code': 0} != {'code': 1}
+E         {'finding_ids': []} != {'finding_ids': ['date:disagrees:results/figures.json', 'date:disagrees:results/raw/run-0001.json']}
+E         {'found': 0} != {'found': 2}
+E         Use -v to get more diff
+
+tools\tests\test_check_02.py:414: AssertionError
+_________________ test_a_waiver_suppresses_one_named_finding __________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5891/test_a_waiver_suppresses_one_n0')
+
+    def test_a_waiver_suppresses_one_named_finding(tmp_path):
+        """The waiver is honoured by the CHECK; whether it was COMMITTED is the
+        runner's question, and the two are deliberately separate."""
+        root = artifact(tmp_path, date_text="2026-01-01", slug="waived")
+        contract = check_02.load_contract()
+        waived = check_02.run(root, contract.CheckContext(waivers=[{
+            "check_id": "CHECK-02",
+            "finding_id": "date:disagrees:results/figures.json",
+            "reason": "the fixture's date is deliberately wrong",
+            "dated_at": "2026-09-15T00:00:00-05:00"}]))
+>       assert waived.waived == 1, waived
+E       AssertionError: CheckResult(check_id='CHECK-02', code=0, found=0, checked=1, floor=1, waived=0, skipped=1, listed=2, finding_ids=[], note='readme-date=2026-01-01 machine-dates=1 (2026-09-15) results-files=1 of 2 utc-date-differs=1')
+E       assert 0 == 1
+E        +  where 0 = CheckResult(check_id='CHECK-02', code=0, found=0, checked=1, floor=1, waived=0, skipped=1, listed=2, finding_ids=[], note='readme-date=2026-01-01 machine-dates=1 (2026-09-15) results-files=1 of 2 utc-date-differs=1').waived
+
+tools\tests\test_check_02.py:459: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_check_02.py::test_a_date_that_disagrees_with_a_machine_stamp_is_a_finding
+FAILED tools/tests/test_check_02.py::test_an_absent_date_region_is_a_finding
+FAILED tools/tests/test_check_02.py::test_a_region_with_no_iso_date_is_a_finding
+FAILED tools/tests/test_check_02.py::test_a_malformed_date_in_the_region_is_absent_rather_than_a_crash
+FAILED tools/tests/test_check_02.py::test_the_absent_and_disagreeing_branches_produce_different_finding_ids
+FAILED tools/tests/test_check_02.py::test_the_comparison_is_against_the_local_date_not_the_utc_one
+FAILED tools/tests/test_check_02.py::test_the_committed_fixture_fails_and_names_every_disagreeing_file
+FAILED tools/tests/test_check_02.py::test_the_anti_rot_pin_holds_for_the_known_bad_fixture
+FAILED tools/tests/test_check_02.py::test_a_waiver_suppresses_one_named_finding
+9 failed, 9 passed in 3.82s
+
+EXIT=1
+
+The exit code above is the pytest process's own, read from $? immediately after
+the redirection.
+
+9 failed, 9 passed, 18 collected. The COLLECTED COUNT is stated because a
+verdict read without its population is a verdict about nothing.
+
+The nine passes are the assertions a check with its detection stubbed out
+satisfies HONESTLY, and they are what make the nine failures readable as a
+DISCRIMINATION result rather than as a module that does not work:
+
+  the module satisfies the check protocol and discovery finds it
+  a date equal to the LOCAL component of a machine stamp passes
+  the local-versus-UTC divergence is counted in the summary line, both when it
+      is one and when it is zero
+  a tree with no date region AND no machine stamp is DID-NOT-RUN, and the
+      verdict column reads DID-NOT-RUN rather than the banned word
+  a gate.json carrying a started_at is NOT a machine measurement, and the
+      exclusion is counted with a reason beside it
+  a per-item record never enters the population, and that exclusion is counted
+  CHECK-01 and CHECK-03 both PASS over the CHECK-02 fixture
+  the committed expectation holds no wording-bearing field
+  the population floor override prints the EFFECTIVE value and demotes
+
+The third of those is the one worth reading twice. The stubbed check already
+KNEW the UTC counterpart named a different day and printed `utc-date-differs=1`
+beside a PASS. The measurement was there the whole time; only the verdict was
+missing. The fifth and sixth are what stop the population from being inflated by
+records that are not measurements -- a gate decides, it does not measure, and a
+per-item record is an input to a derivation rather than a run.
+
+WHAT THE GREEN COMMIT CHANGES
+-------------------------------
+date_findings() gains its two branches. No expectation file is rewritten: the
+expectation was committed HERE, in the RED commit, because it is a statement of
+the INTENDED verdict. With it absent the anti-rot test would have failed by
+naming a path rather than by comparing a stubbed verdict against the pinned one,
+and that failure would have been a false RED. an earlier plan hit exactly that and
+recorded it; this is the inherited repair applied in advance.
+
+THIS PARAGRAPH ORIGINALLY SAID "AND NOTHING ELSE", AND THAT PREDICTION WAS
+WRONG. It is corrected here rather than left standing, because a transcript
+that misdescribes its own follow-up is worse than one that records a surprise.
+The GREEN commit also fixed a BUG IN THIS CHECK that the run above could not
+reveal, and added two regression tests for it -- so the suite is 20 tests from
+the GREEN commit onward, where the capture above records 18.
+
+The bug: ISO_DATE_RE ended in `\b`, under a comment claiming it found the date
+component of a full timestamp. It does not. The character after the day in
+2026-09-15T20:08:11-05:00 is `T`, a WORD character, so there is no boundary
+there and the match fails. Every test in the capture above passed over that
+expression because all of them typed a BARE date into prose -- and render.py
+writes a region body as a KEY HOLE, so the one document that actually matters,
+the generated artifact's own README, reads
+
+    <!--artifact:key:dated_at-->2026-09-15T20:08:11.856801-05:00<!--/...-->
+
+and the check reported `readme-date=ABSENT` with the date sitting in plain
+sight. It was caught by running the walking-skeleton round trip, not by this
+suite: eighteen green tests were consistent with a check that could not read the
+only form production produces. The verbatim output above is left exactly as
+captured; only this forward-looking paragraph is corrected.

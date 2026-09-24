@@ -1,0 +1,455 @@
+CHECK-06 -- THE RED TRANSCRIPT
+===========================================
+
+WHAT CHECK-06 REQUIRES, verbatim from the project requirements document:
+
+    Fails when a results file carries no machine-emitted run record.
+
+and a project requirement, which says what such a record IS:
+
+    A run-metadata emitter writes `started_at` and `finished_at` (ISO-8601 with
+    offset), the environment fingerprint, and `{api_spend_usd, gpu_minutes,
+    wall_seconds}` into every results file -- written by the run, never by a
+    human.
+
+AN OMITTED KEY AND A ZERO ARE DIFFERENT CLAIMS
+----------------------------------------------------------
+A run that spent nothing writes 0.0. It does not omit the key.
+
+The two are indistinguishable to the ordinary defaulting read -- `.get(key, 0.0)`
+returns the same thing for both -- so an omitted key travels downstream as a run
+that cost nothing. a project requirement re-derives each path's metered spend and GPU hours
+from exactly these records BEFORE the owner is asked to approve that path, which
+makes this the difference between a number the owner acts on and a number nobody
+recorded. The suite tests the pair in one test so the two rules cannot quietly
+collapse into one.
+
+A NAIVE TIMESTAMP PRESENTED AS UTC, AND THE HALF A TZINFO TEST CANNOT REACH
+------------------------------------------------------------------------------
+The failure the research note names is `utcnow().isoformat() + "Z"`: the object was
+NAIVE, and the appended letter claims UTC. The obvious rule -- reject a stamp
+that parses without tzinfo -- catches only half of it, and this was MEASURED on
+this interpreter rather than assumed:
+
+    datetime.fromisoformat("2026-01-01T00:00:00Z").tzinfo is None   ->  False
+
+The hand-assembled string parses as AWARE and sails straight through a tzinfo
+check. What catches it is a second measured fact about the same interpreter:
+
+    datetime.now(timezone.utc).isoformat()   ->  '2026-09-16T00:57:50+00:00'
+    datetime.now().astimezone().isoformat()  ->  '2026-09-15T19:57:50-05:00'
+
+`datetime.isoformat()` NEVER emits a literal Z. It writes an offset. So a Z
+suffix is proof the string was assembled by appending a suffix rather than
+produced by a clock, which is the utcnow()-plus-Z shape by construction. Both
+arms report the NAIVE case BY NAME, because "invalid timestamp" would send an
+author hunting for a typo.
+
+test_a_naive_timestamp_with_an_appended_z_is_rejected_by_name builds the string
+from a genuinely naive datetime and ASSERTS THE TZINFO TEST WOULD CLEAR IT
+before asserting the check refuses it -- so the test cannot silently degrade
+into one that exercises the easy arm.
+
+WHERE A RESULTS FILE'S RUN RECORD LIVES, AND WHY THAT IS THREE PLACES
+------------------------------------------------------------------------
+Not always inside the file. `results/figures.json` is a DERIVED view: it carries
+figures and a gate token and no cost fields of its own, and demanding the seven
+fields inside it would make every correctly generated artifact fail. So the
+record is located in one of three places, tried in order, and WHICH ONE was used
+is printed:
+
+    inline      the file carries a run id, so it IS a run record
+    run-block   the file carries a `run` object (the provenance document)
+    by-token    a record under results/raw/ carries the same gate token
+
+A file for which none of the three finds a record is carrying numbers that no
+machine run stands behind. That is the finding the requirement names.
+
+WHAT MAKES THIS A REAL RED RATHER THAN A MISSING FILE
+------------------------------------------------------
+a design rule requires the transcript to be captured BEFORE the implementation commit,
+with commit order as the evidence. The trap is that "before the implementation"
+reads as "before any code exists", and a transcript captured then records a
+module that could not be loaded or an input that was never written. Each exits
+non-zero, each satisfies a naive "non-zero exit" acceptance test, and none of
+them says anything about whether the check DISCRIMINATES.
+
+So tools/checks/check_06.py was REGISTERED AND RUNNABLE when this was captured.
+Discovery found it, it walked results/, it classified every file into the
+population or out of it with a reason, it counted both kinds of exclusion, it
+indexed the run records under raw/ by their gate token, it LOCATED each results
+file's record through the three-place lookup and it printed which location each
+came from. ONE function was stubbed:
+
+    record_findings()   returns no finding, whatever the record is missing
+
+READ THE QUOTED POPULATION LINE IN THE UNBACKED-FIGURE FAILURE. It says
+
+    CHECK-06  PASS  found=0 checked=1 of 1 skipped=0 floor=1 waived=0
+    records-located=0 of 1 (inline=0 run-block=0 by-token=0)
+    results-files=1 of 1
+
+The check tried all three locations. It found the file carried no run id, no run
+block, and a gate token that matched nothing. It printed `records-located=0 of 1`
+in its own summary line -- and returned PASS over a figure that no run stands
+behind. That is precisely the shape a false RED cannot demonstrate: the inputs
+were real, the lookup ran, and only the verdict was wrong.
+
+THE FIXTURE, AND WHY BOTH ITS DEFECTS BELONG TO THIS CHECK
+-------------------------------------------------------------------
+fixtures/broken-artifacts/broken-no-run-record/ carries:
+
+    a figures record holding a figure, a denominator and a gate token, with NO
+        run record anywhere that the token matches
+    a provenance record whose run block is complete EXCEPT for the metered-spend
+        field, which is simply absent
+
+Two defects, two finding ids, two different repairs -- "run the measurement
+through the emitter" and "record what the run spent". A single verdict covering
+both would make the second invisible behind the first.
+
+Everything else about the tree is correct on purpose, and
+test_only_check_06_refuses_the_check_06_fixture runs CHECK-01, CHECK-02,
+CHECK-03 and CHECK-04 over it and asserts all four PASS. That test passes in the
+run below, which is what lets "the checker refused it" name WHICH checker.
+
+REVIEW CRITERION FOR THIS FILE, stated so it can be checked rather than assumed:
+the failure lines below must name ASSERTIONS ON THE VERDICT. A transcript whose
+failure line instead names a failed module load, a collection failure, an absent
+input, or an argument parser rejecting a flag is a FALSE RED and must be
+rejected and recaptured. That is mechanically checkable with a case-insensitive
+grep over five shapes, and the plan states the pattern.
+
+THE PATTERN IS DELIBERATELY NOT PASTED HERE. A transcript that quoted its own
+needle set would match that grep against its own prose and fail the gate it
+exists to satisfy. The pattern lives in the plan's acceptance criteria. It
+returned 0 against the raw pytest output below, and against this assembled file.
+
+CAPTURED
+--------
+  command      .venv/Scripts/python.exe -m pytest tools/tests/test_check_06.py -q
+  cwd          the agent worktree for an earlier plan (paths below show it)
+  interpreter  CPython 3.12.11, pytest 9.1.1
+  parent HEAD  1721f281be37abfe60483b177314638a5d46867f, this plan's CHECK-04
+               GREEN commit. The base of the whole plan is
+               0d628de100e5b12025a5aa4cfb28eaccd5afdbc8
+  redirection  > .reports/p0110-RED-check06-first.txt 2>&1   (never a pipe: a
+               command piped into another process returns the PIPE's exit
+               status, not the command's)
+
+The VERBATIM OUTPUT below was concatenated from that redirected file rather than
+retyped, so no transcription step sits between the run and this record.
+
+VERBATIM OUTPUT
+---------------
+...FFFFF.FF....F.F..F                                                    [100%]
+================================== FAILURES ===================================
+_________ test_a_recorded_zero_passes_and_an_omitted_key_is_a_finding _________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5929/test_a_recorded_zero_passes_an0')
+
+    def test_a_recorded_zero_passes_and_an_omitted_key_is_a_finding(tmp_path):
+        """The pair, in one test, so they cannot quietly collapse into one rule."""
+        zero = run_check(
+            artifact(tmp_path, slug="spent-zero",
+                     raw=[full_run_record(api_spend_usd=0.0)]),
+            report=tmp_path / "zero.json")
+        assert zero.exit_code == core.EXIT_PASS, (
+            "a run that recorded spending nothing was refused; 0.0 is a RECORD:\n%s"
+            % zero.stdout)
+    
+        omitted = run_check(
+            artifact(tmp_path, slug="spent-unknown",
+                     raw=[full_run_record(api_spend_usd=DROP)]),
+            report=tmp_path / "omitted.json")
+>       assert omitted.exit_code == core.EXIT_FINDING, (
+            "an OMITTED cost key passed. Read with the ordinary defaulting idiom it "
+            "is indistinguishable from a zero, and a project requirement re-derives metered spend "
+            "from exactly this field:\n%s" % omitted.stdout)
+E       AssertionError: an OMITTED cost key passed. Read with the ordinary defaulting idiom it is indistinguishable from a zero, and a project requirement re-derives metered spend from exactly this field:
+E         CHECK-06         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  records-located=2 of 2 (inline=1 run-block=0 by-token=1) results-files=2 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-06         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  records..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-c0yewizv')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_06.py:300: AssertionError
+________________ test_a_null_cost_field_is_not_a_recorded_zero ________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5929/test_a_null_cost_field_is_not_0')
+
+    def test_a_null_cost_field_is_not_a_recorded_zero(tmp_path):
+        """None is what an unfinished run leaves behind, not what a free run wrote."""
+        root = artifact(tmp_path, slug="null-cost",
+                        raw=[full_run_record(api_spend_usd=None)])
+        result = run_check(root, report=tmp_path / "null.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-06         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  records-located=2 of 2 (inline=1 run-block=0 by-token=1) results-files=2 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-06         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  records..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-kbf_3_an')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_06.py:316: AssertionError
+_________________ test_an_unfinished_run_is_a_partial_record __________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5929/test_an_unfinished_run_is_a_pa0')
+
+    def test_an_unfinished_run_is_a_partial_record(tmp_path):
+        """start_run writes finished_at as null; finish_run fills it in."""
+        root = artifact(tmp_path, slug="unfinished",
+                        raw=[full_run_record(finished_at=None,
+                                             finished_at_utc=None)])
+        result = run_check(root, report=tmp_path / "unfinished.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-06         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  records-located=2 of 2 (inline=1 run-block=0 by-token=1) results-files=2 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-06         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  records..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-ed5tni5f')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_06.py:326: AssertionError
+________ test_a_naive_timestamp_with_an_appended_z_is_rejected_by_name ________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5929/test_a_naive_timestamp_with_an0')
+
+    def test_a_naive_timestamp_with_an_appended_z_is_rejected_by_name(tmp_path):
+        """The failure the research note names, built the way it is actually produced.
+    
+        The string is assembled from a NAIVE datetime exactly as the bug does it,
+        and this test first MEASURES that the resulting string defeats a tzinfo
+        test -- so the assertion below is about the half of the threat that a
+        tzinfo check cannot reach, and not about a case that was already covered.
+        """
+        naive = datetime.datetime(2026, 1, 1, 0, 0, 0)
+        assert naive.tzinfo is None, "the fixture datetime is not naive"
+        hand_assembled = naive.isoformat() + "Z"
+        assert hand_assembled == "2026-01-01T00:00:00Z", hand_assembled
+        assert datetime.datetime.fromisoformat(hand_assembled).tzinfo is not None, (
+            "fromisoformat no longer reads a trailing Z as aware on this "
+            "interpreter, so this test is not exercising what it claims")
+    
+        root = artifact(tmp_path, slug="appended-z",
+                        raw=[full_run_record(started_at=hand_assembled)])
+        result = run_check(root, report=tmp_path / "appended-z.json")
+    
+>       assert result.exit_code == core.EXIT_FINDING, (
+            "a naive datetime with a hand-appended Z passed:\n%s" % result.stdout)
+E       AssertionError: a naive datetime with a hand-appended Z passed:
+E         CHECK-06         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  records-located=2 of 2 (inline=1 run-block=0 by-token=1) results-files=2 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-06         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  records..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-v_mzkftb')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_06.py:355: AssertionError
+___________ test_a_stamp_with_no_offset_at_all_is_rejected_by_name ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5929/test_a_stamp_with_no_offset_at0')
+
+    def test_a_stamp_with_no_offset_at_all_is_rejected_by_name(tmp_path):
+        """The other arm: it does not even parse as aware."""
+        root = artifact(tmp_path, slug="no-offset",
+                        raw=[full_run_record(started_at="2026-01-01T00:00:00")])
+        result = run_check(root, report=tmp_path / "no-offset.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-06         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  records-located=2 of 2 (inline=1 run-block=0 by-token=1) results-files=2 of 2
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-06         PASS        found=0 checked=2 of 2 skipped=0 floor=1 waived=0  records..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-5_fz2vbx')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_06.py:375: AssertionError
+__________ test_a_results_file_with_no_record_behind_it_is_a_finding __________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5929/test_a_results_file_with_no_re0')
+
+    def test_a_results_file_with_no_record_behind_it_is_a_finding(tmp_path):
+        root = artifact(tmp_path, slug="unbacked", raw=[])
+        result = run_check(root, report=tmp_path / "unbacked.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-06         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  records-located=0 of 1 (inline=0 run-block=0 by-token=0) results-files=1 of 1
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-06         PASS        found=0 checked=1 of 1 skipped=0 floor=1 waived=0  records..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-4qrrqpp1')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_06.py:398: AssertionError
+_____ test_the_missing_and_partial_branches_produce_different_finding_ids _____
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5929/test_the_missing_and_partial_b0')
+
+    def test_the_missing_and_partial_branches_produce_different_finding_ids(tmp_path):
+        """Merging them would make the second repair invisible behind the first."""
+        missing = run_check(artifact(tmp_path, slug="ids-missing", raw=[]),
+                            report=tmp_path / "ids-missing.json")
+        partial = run_check(
+            artifact(tmp_path, slug="ids-partial",
+                     raw=[full_run_record(gpu_minutes=DROP)]),
+            report=tmp_path / "ids-partial.json")
+    
+        missing_ids = set(missing.report["finding_ids"])
+        partial_ids = set(partial.report["finding_ids"])
+>       assert missing_ids, missing.report
+E       AssertionError: {'artifact': '\\home\\user\\AppData\\Local\\Temp\\pytest-of-user\\pytest-5929\\test_the_missing_and_partial_b0\\ids-missing', 'check_id': 'CHECK-06', 'checked': 1, 'code': 0, ...}
+E       assert set()
+
+tools\tests\test_check_06.py:415: AssertionError
+___________ test_the_committed_fixture_fails_and_names_both_defects ___________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5929/test_the_committed_fixture_fai0')
+
+    def test_the_committed_fixture_fails_and_names_both_defects(tmp_path):
+        fixture = conftest.broken_fixture(FIXTURE)
+        result = run_check(fixture, report=tmp_path / "fixture.json")
+>       assert result.exit_code == core.EXIT_FINDING, result.stdout
+E       AssertionError: CHECK-06         PASS        found=0 checked=2 of 3 skipped=1 floor=1 waived=0  records-located=1 of 2 (inline=0 run-block=1 by-token=0) results-files=2 of 3
+E         
+E       assert 0 == 1
+E        +  where 0 = CliResult(exit_code=0, stdout='CHECK-06         PASS        found=0 checked=2 of 3 skipped=1 floor=1 waived=0  records..agent-worktrees/worktrees/agent-aac041b191e3e28b7'), log_path=WindowsPath('/home/user/AppData/Local/Temp/cbb-cli-8ey2c4xt')).exit_code
+E        +  and   1 = core.EXIT_FINDING
+
+tools\tests\test_check_06.py:494: AssertionError
+____________ test_the_anti_rot_pin_holds_for_the_known_bad_fixture ____________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5929/test_the_anti_rot_pin_holds_fo0')
+
+    def test_the_anti_rot_pin_holds_for_the_known_bad_fixture(tmp_path):
+        fixture = conftest.broken_fixture(FIXTURE)
+        expectation_path = fixture / EXPECTATION_FILE
+        assert expectation_path.is_file(), (
+            "%s carries no %s, so its RED evidence has nothing pinning it"
+            % (FIXTURE, EXPECTATION_FILE))
+        expected = json.loads(expectation_path.read_text(encoding="ascii"))
+    
+        result = run_check(fixture, report=tmp_path / "pin.json")
+        assert result.report is not None, "the check wrote no structured report"
+        missing = [field for field in PINNED_FIELDS if field not in result.report]
+        assert not missing, (
+            "the live report no longer carries %r. A renamed field would otherwise "
+            "make this pin compare nothing." % missing)
+        measured = {field: result.report[field] for field in PINNED_FIELDS}
+>       assert measured == expected, (
+            "the structured report drifted from its committed expectation.\n"
+            "  expected: %r\n  measured: %r" % (expected, measured))
+E       AssertionError: the structured report drifted from its committed expectation.
+E           expected: {'check_id': 'CHECK-06', 'checked': 2, 'code': 1, 'finding_ids': ['run-record:missing-record:results/figures.json', 'run-record:partial-record:results/provenance.json'], 'found': 2, 'schema_version': 'canonkit/1'}
+E           measured: {'check_id': 'CHECK-06', 'code': 0, 'found': 0, 'checked': 2, 'finding_ids': [], 'schema_version': 'canonkit/1'}
+E       assert {'check_id': ...cked': 2, ...} == {'check_id': ...e.json'], ...}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Differing items:
+E         {'finding_ids': []} != {'finding_ids': ['run-record:missing-record:results/figures.json', 'run-record:partial-record:results/provenance.json']}
+E         {'code': 0} != {'code': 1}
+E         {'found': 0} != {'found': 2}
+E         Use -v to get more diff
+
+tools\tests\test_check_06.py:526: AssertionError
+_________________ test_a_waiver_suppresses_one_named_finding __________________
+
+tmp_path = WindowsPath('/home/user/AppData/Local/Temp/pytest-of-user/pytest-5929/test_a_waiver_suppresses_one_n0')
+
+    def test_a_waiver_suppresses_one_named_finding(tmp_path):
+        root = artifact(tmp_path, slug="waived", raw=[])
+        contract = check_06.load_contract()
+        waived = check_06.run(root, contract.CheckContext(waivers=[{
+            "check_id": "CHECK-06",
+            "finding_id": "run-record:missing-record:results/figures.json",
+            "reason": "the fixture's figures record is deliberately unbacked",
+            "dated_at": "2026-09-15T00:00:00-05:00"}]))
+>       assert waived.waived == 1, waived
+E       AssertionError: CheckResult(check_id='CHECK-06', code=0, found=0, checked=1, floor=1, waived=0, skipped=0, listed=1, finding_ids=[], note='records-located=0 of 1 (inline=0 run-block=0 by-token=0) results-files=1 of 1')
+E       assert 0 == 1
+E        +  where 0 = CheckResult(check_id='CHECK-06', code=0, found=0, checked=1, floor=1, waived=0, skipped=0, listed=1, finding_ids=[], note='records-located=0 of 1 (inline=0 run-block=0 by-token=0) results-files=1 of 1').waived
+
+tools\tests\test_check_06.py:564: AssertionError
+=========================== short test summary info ===========================
+FAILED tools/tests/test_check_06.py::test_a_recorded_zero_passes_and_an_omitted_key_is_a_finding
+FAILED tools/tests/test_check_06.py::test_a_null_cost_field_is_not_a_recorded_zero
+FAILED tools/tests/test_check_06.py::test_an_unfinished_run_is_a_partial_record
+FAILED tools/tests/test_check_06.py::test_a_naive_timestamp_with_an_appended_z_is_rejected_by_name
+FAILED tools/tests/test_check_06.py::test_a_stamp_with_no_offset_at_all_is_rejected_by_name
+FAILED tools/tests/test_check_06.py::test_a_results_file_with_no_record_behind_it_is_a_finding
+FAILED tools/tests/test_check_06.py::test_the_missing_and_partial_branches_produce_different_finding_ids
+FAILED tools/tests/test_check_06.py::test_the_committed_fixture_fails_and_names_both_defects
+FAILED tools/tests/test_check_06.py::test_the_anti_rot_pin_holds_for_the_known_bad_fixture
+FAILED tools/tests/test_check_06.py::test_a_waiver_suppresses_one_named_finding
+10 failed, 11 passed in 4.88s
+
+EXIT=1
+
+The exit code above is the pytest process's own, read from $? immediately after
+the redirection.
+
+10 failed, 11 passed, 21 collected. The COLLECTED COUNT is stated because a
+verdict read without its population is a verdict about nothing.
+
+Nine of the eleven passes are evidence, and they are what make the ten failures
+readable as a DISCRIMINATION result rather than as a module that does not work:
+
+  the module satisfies the check protocol and discovery finds it
+  the seven-field key set this module RESTATES equals the core's own, so the
+      restatement a vendored copy depends on cannot drift from the source
+  a complete record PASSES in all three of the places it can live, and the
+      summary reports which place each came from -- inline for the run record,
+      run-block for the provenance document, by-token for the derived figures
+      record that has no cost fields of its own
+  an empty results/ directory is DID-NOT-RUN, and the verdict column reads
+      DID-NOT-RUN rather than the banned word
+  a per-item record never enters the population; its run record is the run that
+      wrote it, and the exclusion is counted with that reason
+  a document that claims no measurement is outside the population, so a file
+      holding an integer is not asked to justify itself
+  the gate is excluded and the exclusion NAMES CHECK-04 as the owner of it, so
+      the boundary reads as a boundary rather than an oversight
+  CHECK-01, CHECK-02, CHECK-03 and CHECK-04 all PASS over the CHECK-06 fixture
+  the committed expectation holds no wording-bearing field
+  the population floor override prints the EFFECTIVE value and demotes
+
+ONE PASS IS WORTH LESS THAN IT LOOKS, AND SAYING SO IS THE POINT.
+test_an_offset_bearing_stamp_is_accepted passes here, and that pass is not
+evidence: a check whose detection is stubbed to find nothing accepts every
+timestamp, including the ones it is supposed to refuse. It becomes evidence in
+the GREEN commit, where the check rejects two naive shapes and still accepts a
+real offset. It is listed with that caveat attached rather than counted as a
+win, because "a test passed for the wrong reason" is a failure this phase has
+already been bitten by.
+
+The third pass in the list is the one worth reading twice. The three-place
+lookup was already WORKING in this run -- the stub is downstream of it -- so the
+summary line for the unbacked figure could report `records-located=0 of 1` and
+name all three places it had tried, beside a PASS. Everything needed for the
+verdict was measured and printed; only the verdict was absent.
+
+WHAT THE GREEN COMMIT CHANGES
+-------------------------------
+record_findings() gains its branches: a record that is missing, one that is
+partial, and a timestamp that is naive in either of the two shapes. The
+expectation file was committed HERE, in the RED commit, because it is a
+statement of the INTENDED verdict: with it absent the anti-rot test would have
+failed by naming a path rather than by comparing a stubbed verdict against the
+pinned one, and that failure would have been a false RED. an earlier plan hit exactly
+that and recorded it.
+
+IT ALSO CHANGES SOMETHING THIS RUN COULD NOT HAVE REVEALED, and that is recorded
+here rather than left out. The first GREEN reported ONE incomplete run record
+TWICE -- once for the raw record itself and once for the derived figures record
+that points at it by token. Both files are legitimately in the population, both
+correctly located the same record, and the finding was keyed on the FILE.
+
+That is not cosmetic. A derived view and the record behind it is the normal
+shape of a real artifact, so `found` would have grown with how many derived
+views an artifact publishes rather than with what is wrong with it -- a count
+that gets worse the more honest work the artifact does. The record-level
+findings are now keyed on the RECORD (`results/provenance.json#run` for a run
+block, the raw record's own path for a token match) and collapse to one; a
+MISSING record stays keyed on the referencing file, because there is no record
+to name. The committed expectation moved with it, and
+test_one_broken_record_is_one_finding_however_many_files_point_at_it pins the
+property so it cannot quietly come back. The suite is 22 tests from the GREEN
+commit onward, where the capture above records 21.
+
+The stub could not have shown this: a check that finds nothing reports nothing
+twice as readily as once. It appeared the moment the detection had something to
+say, which is the argument for running the GREEN suite and READING it rather
+than checking that it is green.

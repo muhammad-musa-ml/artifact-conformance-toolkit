@@ -1,0 +1,52 @@
+{
+  "artifact": "broken-figure-without-population",
+  "dated_at": "2026-09-15",
+  "figures": {
+    "cache_hit_ratio": {
+      "canon_bullet": "example-alpha:P2-B4",
+      "canon_value": 0.58,
+      "derived_from": [
+        "results.json#cache.warm"
+      ],
+      "not_shown": "A single warm window on one laptop.",
+      "population_label": "cache lookups in the warm window",
+      "reproduce_criterion": {
+        "kind": "abs",
+        "tolerance": 0.02
+      },
+      "runs": [],
+      "similar": "CONFIRMS",
+      "similar_reason_ref": "register-fragments/broken-figure-without-population.md",
+      "threshold_claim": false,
+      "tier_achieved": "recompute",
+      "unit": "ratio",
+      "value": 0.62
+    },
+    "replayed_requests": {
+      "canon_bullet": "example-alpha:P2-B3",
+      "canon_value": 500,
+      "derived_from": [
+        "results.json#replay.count"
+      ],
+      "not_shown": "One replay, one machine.",
+      "population": 500,
+      "population_label": "replayed requests",
+      "reproduce_criterion": {
+        "kind": "abs",
+        "tolerance": 0
+      },
+      "runs": [],
+      "similar": "CONFIRMS",
+      "similar_reason_ref": "register-fragments/broken-figure-without-population.md",
+      "threshold_claim": false,
+      "tier_achieved": "recompute",
+      "unit": "requests",
+      "value": 500
+    }
+  },
+  "gate_token": "0000000000000000000000000000000000000000000000000000000000000000",
+  "schema": "canonkit/figures/1",
+  "schema_version": "canonkit/1",
+  "started_at": "2026-09-15T09:00:00+05:00",
+  "started_at_utc": "2026-09-15T04:00:00Z"
+}

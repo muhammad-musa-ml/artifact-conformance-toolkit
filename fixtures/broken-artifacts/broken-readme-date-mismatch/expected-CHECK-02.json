@@ -1,0 +1,11 @@
+{
+  "check_id": "CHECK-02",
+  "checked": 2,
+  "code": 1,
+  "finding_ids": [
+    "date:disagrees:results/figures.json",
+    "date:disagrees:results/raw/run-0001.json"
+  ],
+  "found": 2,
+  "schema_version": "canonkit/1"
+}

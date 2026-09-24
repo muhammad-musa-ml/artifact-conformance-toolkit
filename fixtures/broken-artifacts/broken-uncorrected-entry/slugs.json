@@ -1,0 +1,48 @@
+{
+  "schema": "manifest/1",
+  "schema_version": 1,
+  "min_population_overrides": {},
+  "scan_root": {
+    "depth": 1,
+    "relative_to_repo_root": ".."
+  },
+  "slugs": [
+    {
+      "backs_bullets": [
+        "example-beta:P5-B3"
+      ],
+      "bullets": [],
+      "canon": "example-beta",
+      "project": null,
+      "register_row": true,
+      "scanned": true,
+      "slug": "cited-path",
+      "status": "built"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-alpha:P1-B3",
+        "example-alpha:P1-B4"
+      ],
+      "canon": "example-alpha",
+      "project": "P1",
+      "register_row": true,
+      "scanned": true,
+      "slug": "measured-path",
+      "status": "built"
+    },
+    {
+      "backs_bullets": [],
+      "bullets": [
+        "example-alpha:P2-B1"
+      ],
+      "canon": "example-alpha",
+      "project": "P2",
+      "register_row": true,
+      "scanned": true,
+      "slug": "not-yet-run",
+      "status": "pending"
+    }
+  ]
+}

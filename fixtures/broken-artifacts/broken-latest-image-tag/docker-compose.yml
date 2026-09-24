@@ -1,0 +1,16 @@
+# DELIBERATELY BROKEN FIXTURE. Two image references, two different defects.
+#
+# Modelled on templates/docker-compose.yml, whose Rule 1 this tree violates on
+# purpose: every image there is pinned by digest, and the floating tag is banned
+# anywhere in the file.
+
+services:
+
+  warehouse:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: artifact
+
+  probe:
+    image: grafana/k6:latest
+    command: ["run", "/scripts/load.js"]

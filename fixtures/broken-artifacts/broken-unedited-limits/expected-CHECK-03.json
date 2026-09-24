@@ -1,0 +1,13 @@
+{
+  "check_id": "CHECK-03",
+  "checked": 1,
+  "code": 1,
+  "finding_ids": [
+    "limits:no-scope-vocabulary:README.md",
+    "limits:sentinel:README.md",
+    "limits:thin:README.md",
+    "limits:unedited:README.md"
+  ],
+  "found": 4,
+  "schema_version": "canonkit/1"
+}

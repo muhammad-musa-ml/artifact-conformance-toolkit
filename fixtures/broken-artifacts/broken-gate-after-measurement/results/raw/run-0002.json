@@ -1,0 +1,19 @@
+{
+  "api_spend_usd": 0.0,
+  "env": {
+    "cpu_count": 24,
+    "machine": "AMD64",
+    "platform": "win32",
+    "python": "3.12.11"
+  },
+  "finished_at": "2026-09-15T21:35:00-05:00",
+  "finished_at_utc": "2026-09-16T02:35:00+00:00",
+  "gpu_minutes": 0.0,
+  "items_written": 500,
+  "run_id": "run-0002",
+  "schema": "canonkit/run/1",
+  "schema_version": "canonkit/1",
+  "started_at": "2026-09-15T21:30:00-05:00",
+  "started_at_utc": "2026-09-16T02:30:00+00:00",
+  "wall_seconds": 300.0
+}

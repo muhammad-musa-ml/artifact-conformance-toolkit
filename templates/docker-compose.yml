@@ -1,0 +1,137 @@
+# The artifact's services. Delete what this path does not use; do not relax the
+# rules below for what it does.
+#
+# NO `version:` KEY. It is obsolete in Compose v2 and emits a warning on every
+# invocation, and a warning nobody reads is how a real one gets missed.
+#
+# ---------------------------------------------------------------------------
+# RULE 1 -- EVERY IMAGE IS PINNED BY DIGEST. NEVER BY TAG.
+# ---------------------------------------------------------------------------
+# A tag is a moving target: `postgres:18` resolves to different bytes on
+# different days, so "the same benchmark" can silently mean different software.
+# Every `image:` value below is `name@sha256:<digest>`, and the floating tag
+# whose name means "newest" is banned outright, anywhere in this file. Both are
+# checked, and the check fails the artifact.
+#
+# THAT BAN IS WHY THE TAG IS DESCRIBED HERE IN WORDS RATHER THAN WRITTEN OUT.
+# The check scans this whole file, not just its `image:` keys, because a
+# commented-out service is one uncomment away from being a pull site. A comment
+# explaining the ban by quoting the banned string would therefore be a hit for
+# it -- in every artifact generated from this template, forever. Measured: the
+# first draft of this paragraph did exactly that and failed the check.
+#
+# The digests below were RESOLVED FROM THE REGISTRY, not typed from memory:
+#
+#     docker buildx imagetools inspect postgres:18
+#     docker buildx imagetools inspect redis:8
+#
+# and the top-level manifest-list digest was taken, so the reference still
+# resolves per-platform. Re-run those commands to refresh; paste the `Digest:`
+# line's value, never a shortened form of it.
+#
+# PIN BASE IMAGES INSIDE ANY Dockerfile TOO. A digest-pinned app image built
+# `FROM python:3.12` is not pinned -- the base moved underneath it. The same
+# applies to any image a DRIVER script launches rather than compose: resolve
+# that digest and pin it in the driver.
+#
+# ---------------------------------------------------------------------------
+# RULE 2 -- NAMED VOLUMES ONLY. NEVER A BIND MOUNT UNDER /mnt/c.
+# ---------------------------------------------------------------------------
+# On this machine the containers run inside a WSL2 virtual machine, and I/O
+# across the Windows filesystem boundary is five to twenty times slower than a
+# path inside the VM. A database or object store on a bind mount would make a
+# latency measurement a measurement of filesystem translation. Named volumes
+# live inside the VM, so they do not.
+#
+# ---------------------------------------------------------------------------
+# RULE 3 -- HIGH, NON-COLLIDING HOST PORTS. See PORTS.md for the convention.
+# ---------------------------------------------------------------------------
+# Container-side ports stay standard; only the host side is remapped, so nothing
+# inside the compose network has to know about the convention.
+#
+# ---------------------------------------------------------------------------
+# RULE 4 -- EVERY NON-DEFAULT SETTING CARRIES A COMMENT SAYING WHY.
+# ---------------------------------------------------------------------------
+# A tuned value with no rationale is indistinguishable from one tuned until the
+# benchmark passed.
+
+services:
+
+  postgres:
+    # postgres:18 resolved at the date recorded in results/provenance.json.
+    image: postgres@sha256:4ef4dbc939d61acea57712655ddb4b4ab27419c913f94cca0cd57cb3ea3c2280
+    environment:
+      POSTGRES_USER: artifact
+      POSTGRES_PASSWORD: artifact
+      POSTGRES_DB: artifact
+    ports:
+      # Host port 55432 -> container 5432. See PORTS.md.
+      - "55432:5432"
+    volumes:
+      # NAMED VOLUME. See RULE 2 above.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # pg_isready rather than a TCP probe: the port accepts connections while
+      # the server is still replaying WAL, so a TCP check reports ready before
+      # a query would succeed, and the first measured request then pays the
+      # remainder of startup.
+      test: ["CMD-SHELL", "pg_isready -U artifact -d artifact"]
+      interval: 2s
+      timeout: 3s
+      # Generous, because a cold start on a laptop under load is slow and a
+      # too-tight retry budget turns a slow start into a spurious failure.
+      retries: 30
+      start_period: 5s
+
+  cache:
+    # redis:8 resolved at the date recorded in results/provenance.json.
+    image: redis@sha256:298e5b3bc566bade82f46ad5511777a4a07a294097ce16ada2f6a42be5239df5
+    # appendonly is OFF deliberately. This cache is a measurement subject, and
+    # durability would add fsync latency to every write -- making the artifact
+    # report a number that is partly a measurement of disk flushing. A cache
+    # that loses its contents on restart is the correct model of a cache.
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    ports:
+      # Host port 56379 -> container 6379. See PORTS.md.
+      - "56379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  schema:
+    # The same digest as the postgres service above, on purpose: a one-shot that
+    # used a different client build would introduce a second moving part into a
+    # step whose only job is being deterministic.
+    image: postgres@sha256:4ef4dbc939d61acea57712655ddb4b4ab27419c913f94cca0cd57cb3ea3c2280
+    depends_on:
+      postgres:
+        # The whole reason the healthchecks above exist. `depends_on` without a
+        # condition waits only for the container to START, which for a database
+        # is meaningless -- the process is up long before it will answer. This
+        # waits for HEALTHY.
+        condition: service_healthy
+    environment:
+      PGPASSWORD: artifact
+    entrypoint:
+      - psql
+      - --host=postgres
+      - --username=artifact
+      - --dbname=artifact
+      - --set=ON_ERROR_STOP=1
+      - --command=CREATE SCHEMA IF NOT EXISTS artifact;
+    restart: "no"
+
+  # THE APPLICATION SERVICE, IF THIS PATH HAS ONE, GOES HERE.
+  #
+  # Build it from a Dockerfile whose own base is digest-pinned, publish it on
+  # host port 58000, and give it the same `depends_on` + `condition` treatment
+  # the schema service has above. Do not add a service that pulls by tag: the
+  # check that rejects tag-only references does not have an exemption for an
+  # application image, and it should not grow one.
+
+volumes:
+  # Declared, so both live inside the WSL2 virtual machine rather than on a
+  # bind-mounted Windows path. See RULE 2.
+  pgdata:

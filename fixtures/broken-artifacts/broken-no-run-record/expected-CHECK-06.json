@@ -1,0 +1,11 @@
+{
+  "check_id": "CHECK-06",
+  "checked": 2,
+  "code": 1,
+  "finding_ids": [
+    "run-record:missing-record:results/figures.json",
+    "run-record:partial-record:results/provenance.json#run"
+  ],
+  "found": 2,
+  "schema_version": "canonkit/1"
+}

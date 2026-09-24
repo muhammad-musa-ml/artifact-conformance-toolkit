@@ -1,0 +1,12 @@
+{
+  "check_id": "CHECK-20",
+  "checked": 1,
+  "code": 1,
+  "finding_ids": [
+    "backing:marker-present:example-alpha:P1-B3",
+    "backing:no-correction:example-alpha:P1-B3",
+    "backing:no-correction:example-alpha:P1-B4"
+  ],
+  "found": 3,
+  "schema_version": "canonkit/1"
+}
