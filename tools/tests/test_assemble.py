@@ -290,23 +290,23 @@ def test_lint_passes_on_a_freshly_built_file(tmp_path):
 
 
 def test_lint_detects_a_direct_append_and_names_the_difference(tmp_path, capsys):
-    """The failure mode this whole module exists for: one agent appending.
+    """The failure mode this whole module exists for: one writer appending.
 
     Parallelization is ON at `fine` granularity, so two record-writing plans can
     run at once. A plan that appends straight to the assembled file loses the
-    other agent's write with no error and no count moving.
+    other writer's write with no error and no count moving.
     """
     kind_dir = _kind_dir(tmp_path)
     _fragment(kind_dir, "2026-09-15-090000", "alpha")
     target = Path(assemble.build(kind_dir)["target"])
 
     with open(str(target), "a", encoding="utf-8", newline="") as handle:
-        handle.write("\nAN AGENT APPENDED THIS DIRECTLY.\n")
+        handle.write("\nA DIRECT APPEND WAS MADE HERE.\n")
 
     code = assemble.main(["lint", "--dir", str(kind_dir)])
     captured = capsys.readouterr()
     assert code != 0, "a direct append went undetected"
-    assert "AN AGENT APPENDED THIS DIRECTLY." in captured.out + captured.err, (
+    assert "A DIRECT APPEND WAS MADE HERE." in captured.out + captured.err, (
         "lint did not print the differing content, so an operator cannot see "
         "what changed"
     )

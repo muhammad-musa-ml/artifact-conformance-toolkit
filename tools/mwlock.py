@@ -2,7 +2,7 @@
 
 Parallelization is ON and granularity is `fine`, so record-writing plans run
 concurrently. A plan that appends to a shared assembled file directly loses the
-other agent's write, silently -- there is no error, no conflict marker, and no
+other writer's write, silently -- there is no error, no conflict marker, and no
 count that moves. This module is the mutual exclusion that makes the atomic
 replace in `assemble_records.py` safe, and it is the gate a GPU measurement
 takes so two runs never contend for the one RTX 4050.

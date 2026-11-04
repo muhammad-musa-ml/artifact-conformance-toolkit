@@ -1,6 +1,6 @@
 """a design rule (HARD): the checker must not be silenceable by the thing it checks.
 
-Build agents run unattended. A waiver a build agent can write is not a waiver,
+Automated builds run unattended. A waiver an automated build can write is not a waiver,
 it is an off switch, so the run's waivers record is compared against the LAST
 COMMITTED version of the same file -- read back through git, never against a
 cached copy -- and any waiver present in the first but not the second is ITSELF
@@ -85,7 +85,7 @@ def test_uncommitted_waiver_is_finding(tmp_path):
     The artifact carries one real CHECK-01 finding. The working copy then gains
     a well-formed waiver naming it, and the committed copy does not. A checker
     that honoured it would report a clean artifact -- which is exactly what an
-    unattended build agent would produce for itself.
+    unattended build would produce for itself.
     """
     work = committed_artifact(tmp_path, entries=())
     record = json.loads((work / "waivers.json").read_text(encoding="utf-8"))
@@ -222,7 +222,7 @@ def test_a_rewritten_reason_makes_a_committed_waiver_a_new_one(tmp_path):
 
     An owner who committed a waiver for one reason has not thereby committed a
     waiver whose reason was rewritten afterwards -- which is the edit an
-    unattended agent would make to widen one.
+    unattended build would make to widen one.
     """
     work = committed_artifact(tmp_path, entries=[a_waiver()])
     record = json.loads((work / "waivers.json").read_text(encoding="utf-8"))

@@ -24,7 +24,7 @@ re-ran the generator. This cannot: there is no copy to fall out of date.
 WHAT IT DELIBERATELY DOES NOT SAY
 ---------------------------------
 Nothing it prints, and nothing it instructs anyone to write, describes the work
-as built by an agent or by this programme. The entries record the owner's own
+as built by anyone but the owner or by this programme. The entries record the owner's own
 engagement work. This repository is the record-keeping around a reproduction of
 that work, and the two must not be confused in a private record -- so the
 correction command it prints carries a `--note` about the MEASUREMENT, never

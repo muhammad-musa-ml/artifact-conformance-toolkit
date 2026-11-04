@@ -122,7 +122,7 @@ distinction this file exists to preserve.
 
 WAIVERS ARE AN OWNER ROUND TRIP, NOT A SWITCH
 -----------------------------------------------------------
-Build agents run unattended. A checker the thing being checked can silence is
+Automated builds run unattended. A checker the thing being checked can silence is
 not a checker. So the run's waivers record is compared against the LAST
 COMMITTED version of the same file, read back through git, and any waiver
 present in the first but not the second is ITSELF a finding. The owner round
@@ -142,7 +142,7 @@ writes it.
 THE SCAN ROOT IS DERIVED, NOT SPELLED
 --------------------------------------------
 A sibling guard in this repository derives its scan root as `<repo>/..` and is
-correct in the main checkout and WRONG inside an agent worktree, where it
+correct in the main checkout and WRONG inside a git worktree, where it
 resolves to the worktrees directory and runs over 2 directories instead of 25 --
 and passes either way, because its vacuity check only fires at zero. This file
 resolves the MAIN repository root first (walking a worktree's `.git` FILE back
@@ -461,7 +461,7 @@ SELF_SKIP_REASONS = {
 # THE ARTIFACT. An artifact that could declare its own
 # inapplicability would be a checker the thing being checked points at its own
 # evidence. `status` and `no_row_reason` are owner-set and plan-set under
-# the status rule and are never written by a build agent or by this tool.
+# the status rule and are never written by an automated build or by this tool.
 #
 # EVERY PREDICATE BELOW REQUIRES A RECORDED REASON AS ONE OF ITS CONJUNCTS
 # Dropping that conjunct would exempt every artifact that has not
@@ -690,7 +690,7 @@ def resolve_worktree_main_root(repo_root, marker_text):
 
     A worktree's `.git` is a FILE holding `gitdir: <main>/.git/worktrees/<name>`.
     Walking that back to <main> is what makes the derived scan root resolve to
-    the same population from inside an agent as from the main checkout. Returns
+    the same population from inside a worktree as from the main checkout. Returns
     `repo_root` unchanged for any marker this does not understand -- failing
     back to the observable value rather than to a guess.
 
@@ -1058,7 +1058,7 @@ def resolve_waivers(artifact):
     The working copy is what this run would honour. The committed copy is what
     the owner actually authorised. A waiver present in the first and absent from
     the second is a finding IN ITS OWN RIGHT, because a checker the thing being
-    checked can silence is not a checker, and build agents run unattended.
+    checked can silence is not a checker, and automated builds run unattended.
 
     The committed copy is read back THROUGH GIT rather than from any cache this
     process wrote. A cached comparison would be the run agreeing with itself.

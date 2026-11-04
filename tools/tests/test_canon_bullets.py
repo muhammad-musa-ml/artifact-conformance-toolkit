@@ -674,7 +674,7 @@ def test_the_marker_carries_no_programme_vocabulary():
     """The entry is a private record, not this repository's worklog.
 
     The marker never names this programme, its phases, its example projects, its
-    tooling or any agent. THE RED THIS CATCHES is a marker reading
+    tooling or any other author. THE RED THIS CATCHES is a marker reading
     "example project P1 not yet run" -- true, but it puts scaffolding into a record
     whose whole job is to describe the owner's own engagement work. The
     example project is already the row's `P1-B3:` prefix, so naming it again in

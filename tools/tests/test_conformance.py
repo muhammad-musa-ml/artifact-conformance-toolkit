@@ -57,8 +57,8 @@ checks = _load("check_contract_for_conformance_tests", CHECKS_DIR / "__init__.py
 # an earlier plan open item 12, CLOSED here.
 #
 # `conftest.REPO_ROOT` is the WORKING root -- the checkout this file happens to
-# be read from. Inside an agent worktree that is `<repo>/agent-worktrees/worktrees/<id>`,
-# whose parent is `agent-worktrees/worktrees` and NOT `<home>/Research`. Every assertion
+# be read from. Inside a linked worktree that is `<repo>/<wt-dir>/worktrees/<id>`,
+# whose parent is `<wt-dir>/worktrees` and NOT `<home>/Research`. Every assertion
 # about the SCAN ROOT anchors on the MAIN checkout instead, because that is the
 # root the manifest's `..` is declared relative to and it is already how
 # `conftest.SCAN_ROOT` resolves.
@@ -66,7 +66,7 @@ checks = _load("check_contract_for_conformance_tests", CHECKS_DIR / "__init__.py
 # The cost of getting this wrong was measured twice: from the main checkout the
 # two anchors coincide, so a scan-root test written against the working root
 # reported GREEN over the right population by accident; from a worktree the same
-# tests enumerated `agent-worktrees/worktrees` and failed. The conventions document, section 8,
+# tests enumerated `<wt-dir>/worktrees` and failed. The conventions document, section 8,
 # rule 8 is the rule -- derive such an anchor from a main_repo_root() that walks
 # a worktree's `.git` FILE back to the checkout it was linked from, and compare
 # by PATH RESOLUTION rather than by string equality.
@@ -154,7 +154,7 @@ def synthetic_manifest(path, slugs, depth=1):
 
     `slugs` is a list of (slug, status) pairs. Written rather than derived from
     the real manifest, because a test that mutated the committed expected set
-    would be editing an owner/plan-set file a build agent may never write.
+    would be editing an owner/plan-set file an automated build may never write.
     """
     return write_json(path, {
         "schema": "manifest/1",
@@ -644,7 +644,7 @@ def test_the_closeout_criterion_prints_its_own_count(tmp_path):
 
 
 def test_the_runner_never_writes_the_manifest_status_field(tmp_path):
-    """`status` is owner/plan-set and never build-agent-set."""
+    """`status` is owner/plan-set and never build-set."""
     root = tmp_path / "scan-root"
     root.mkdir()
     artifact(root, slug="alpha")
@@ -672,13 +672,13 @@ def test_the_worktree_main_root_matches_the_census_helper():
     from tools import census_live_store
 
     repo = str(REPO_ROOT)
-    fake_worktree = str(REPO_ROOT / "agent-worktrees" / "worktrees" / "agent-x")
+    fake_worktree = str(REPO_ROOT / "linked-worktrees" / "worktrees" / "wt-x")
     cases = [
         (repo, ""),
         (repo, "not a gitdir marker"),
-        (fake_worktree, "gitdir: %s/.git/worktrees/agent-x"
+        (fake_worktree, "gitdir: %s/.git/worktrees/wt-x"
                         % REPO_ROOT.as_posix()),
-        (fake_worktree, "gitdir: ../../.git/worktrees/agent-x"),
+        (fake_worktree, "gitdir: ../../.git/worktrees/wt-x"),
     ]
     for repo_root, marker in cases:
         mine = conformance.resolve_worktree_main_root(repo_root, marker)
@@ -690,9 +690,9 @@ def test_the_worktree_spelling_resolves_to_the_same_scan_root():
     """a recorded defect in one assertion: the same population from either location."""
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     from_main = conformance.declared_scan_root(manifest, MAIN_REPO_ROOT)
-    marker = "gitdir: %s/.git/worktrees/agent-x" % MAIN_REPO_ROOT.as_posix()
+    marker = "gitdir: %s/.git/worktrees/wt-x" % MAIN_REPO_ROOT.as_posix()
     worktree_root = conformance.resolve_worktree_main_root(
-        str(MAIN_REPO_ROOT / "agent-worktrees" / "worktrees" / "agent-x"), marker)
+        str(MAIN_REPO_ROOT / "linked-worktrees" / "worktrees" / "wt-x"), marker)
     from_worktree = conformance.declared_scan_root(manifest, worktree_root)
     assert from_main == from_worktree, (from_main, from_worktree)
 
@@ -875,7 +875,7 @@ def test_the_scan_root_anchor_is_the_main_checkout_not_the_working_one():
         conformance.declared_scan_root(manifest, MAIN_REPO_ROOT)).resolve()
     assert derived == conftest.SCAN_ROOT.resolve(), (derived, conftest.SCAN_ROOT)
 
-    worktree = MAIN_REPO_ROOT / "agent-worktrees" / "worktrees" / "agent-x"
+    worktree = MAIN_REPO_ROOT / "linked-worktrees" / "worktrees" / "wt-x"
     from_worktree = Path(
         conformance.declared_scan_root(manifest, worktree)).resolve()
     assert from_worktree != derived, (
@@ -887,7 +887,7 @@ def test_the_scan_root_anchor_is_the_main_checkout_not_the_working_one():
         manifest,
         conformance.resolve_worktree_main_root(
             str(worktree),
-            "gitdir: %s/.git/worktrees/agent-x" % MAIN_REPO_ROOT.as_posix()))
+            "gitdir: %s/.git/worktrees/wt-x" % MAIN_REPO_ROOT.as_posix()))
     ).resolve()
     assert recovered == derived, (recovered, derived)
 

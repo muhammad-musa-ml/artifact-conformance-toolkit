@@ -599,7 +599,7 @@ def test_config_waivers_states_the_owner_authored_rule():
     """The rule that makes the channel work must travel WITH the channel.
 
     A waiver file with no statement of who may write it is an invitation for an
-    unattended build agent to silence the checker that is checking it.
+    unattended build to silence the checker that is checking it.
     """
     text = _read(WAIVERS).lower()
     assert "owner-authored only" in text

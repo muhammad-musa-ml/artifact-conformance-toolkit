@@ -66,9 +66,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 #
 # WHAT WAS MEASURED. `REPO_ROOT / ".."` is correct in the main checkout, where it
 # resolves to <home>/Research/ and the design rule guard runs over 25 directories.
-# Inside an agent worktree REPO_ROOT is <repo>/agent-worktrees/worktrees/agent-<id>, so
-# the same expression resolves to <repo>/agent-worktrees/worktrees and the guard runs
-# over 2 to 4 directories -- the sibling worktrees of that wave. Every agent in
+# Inside a linked worktree REPO_ROOT is <repo>/<wt-dir>/worktrees/<id>, so
+# the same expression resolves to <repo>/<wt-dir>/worktrees and the guard runs
+# over 2 to 4 directories -- the sibling worktrees of that wave. Every worktree in
 # every parallel wave (4, 5 and 8) therefore measured the wrong population, and
 # an earlier plan's guard reported it GREEN because its vacuity check only fires at 0
 # and 2 is not 0. A count that is PRESENT but WRONG reads as detail, where a
@@ -90,7 +90,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # this file because conftest.py was outside its declared files_modified.
 #
 # The property that matters is that the SAME population is enumerated from inside
-# an agent as from the main checkout. Anchoring on main_repo_root() is what makes
+# a linked worktree as from the main checkout. Anchoring on main_repo_root() is what makes
 # that true; anchoring on REPO_ROOT is what made it false.
 SCAN_ROOT_RELATIVE = ".."
 MAIN_REPO_ROOT = Path(census_live_store.main_repo_root()).resolve()

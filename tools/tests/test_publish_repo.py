@@ -1644,8 +1644,8 @@ def test_no_example_source_row_carries_a_real_private_fingerprint():
         # FINDING SITE 4, and it is the only one of the four whose mechanism is
         # legible on one line. Every row here is a `..`-relative path naming a
         # file BESIDE THE MAIN CHECKOUT. Resolved against `REPO_ROOT` -- the
-        # WORKING checkout -- it becomes <main>/agent-worktrees/worktrees/information/...
-        # inside an agent worktree, which is not a file, so the assertion below
+        # WORKING checkout -- it becomes <main>/<wt-dir>/worktrees/information/...
+        # inside a linked worktree, which is not a file, so the assertion below
         # fires and the differential never runs. The row's own anchor is the
         # main root; nothing about it was ever working-relative.
         target = conftest.MAIN_REPO_ROOT / str(row["path"]).replace("/", os.sep)

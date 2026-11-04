@@ -56,7 +56,7 @@ it. The plan id lives in the front matter, where re-ordering cannot touch it.
 
 ## Assembled files are GENERATED-ONLY
 
-**A plan that appends to an assembled file directly loses another agent's
+**A plan that appends to an assembled file directly loses another writer's
 write, silently.** There is no error, no conflict marker, and no count that
 moves.
 

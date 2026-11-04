@@ -47,9 +47,9 @@ census = _load("census_live_store", REPO_ROOT / "tools" / "census_live_store.py"
 def assert_scan_root_is_the_main_checkouts_parent(root, what):
     """The anchor assertion that REPLACED the `>= 10` population floor.
 
-    WHAT THE OLD FLOOR WAS FOR, and why a number could not do the job. Inside an
-    agent worktree, a root derived as `conftest.REPO_ROOT / ".."` resolves to
-    `<repo>/agent-worktrees/worktrees` instead of the directory that holds the artifact
+    WHAT THE OLD FLOOR WAS FOR, and why a number could not do the job. Inside a
+    linked worktree, a root derived as `conftest.REPO_ROOT / ".."` resolves to
+    `<repo>/<wt-dir>/worktrees` instead of the directory that holds the artifact
     slugs. Every "is not among the enumerated" assertion downstream still PASSES
     there, over a population of two or three sibling worktrees rather than the
     ~25 trees the property is about -- a pass over a population nobody confirmed.
@@ -445,7 +445,7 @@ def test_declared_scan_root_resolves_equal_to_conftest_scan_root(manifest):
 def test_no_suite_module_resolves_a_parent_path_against_the_WORKING_checkout():
     """an earlier finding's durable half: stop the defect class recurring, not just its four.
 
-    THE MEASURED PROBLEM. Four tests failed inside an agent worktree and passed
+    THE MEASURED PROBLEM. Four tests failed inside a linked worktree and passed
     from the main checkout, at the same commit -- 971/970/1/0 against
     971/960/7/4. The count had gone from three to four because a plan written
     the same day anchored a NEW test on the working root, so the class is not
@@ -455,7 +455,7 @@ def test_no_suite_module_resolves_a_parent_path_against_the_WORKING_checkout():
     THE RULE, and it is mechanical. A path that leaves this repository -- any
     `..` component -- is describing something BESIDE THE MAIN CHECKOUT: the
     scan root, the live store, a sibling artifact slug. Inside a worktree the
-    working root is `<main>/agent-worktrees/worktrees/agent-<id>`, so the same
+    working root is `<main>/<wt-dir>/worktrees/<id>`, so the same
     expression lands two levels deep in a directory that holds sibling
     worktrees. `conftest.MAIN_REPO_ROOT` is the anchor that resolves the same
     in both places; `conftest.REPO_ROOT` is not.
@@ -511,7 +511,7 @@ def test_no_suite_module_resolves_a_parent_path_against_the_WORKING_checkout():
     assert not hits, (
         "%d site(s) resolve a path that leaves the repository against the "
         "WORKING checkout. Inside a worktree each lands in "
-        "<main>/agent-worktrees/worktrees, which is a population nobody confirmed. "
+        "<main>/<wt-dir>/worktrees, which is a population nobody confirmed. "
         "Use conftest.MAIN_REPO_ROOT:\n%s" % (len(hits), "\n".join(hits)))
 
     # The scan has to be able to FIND one, or a clean result says nothing about
@@ -537,10 +537,10 @@ def test_the_scan_root_constants_are_invariant_under_a_worktree_anchor():
     anchoring assertion in this suite is measuring the wrong tree and no green
     run would say so.
     """
-    marker = "gitdir: %s/.git/worktrees/agent-x" % \
+    marker = "gitdir: %s/.git/worktrees/wt-x" % \
         conftest.MAIN_REPO_ROOT.as_posix()
-    pretend_worktree = str(conftest.MAIN_REPO_ROOT / "agent-worktrees" / "worktrees"
-                           / "agent-x")
+    pretend_worktree = str(conftest.MAIN_REPO_ROOT / "linked-worktrees" / "worktrees"
+                           / "wt-x")
 
     resolved = Path(census.resolve_worktree_main_root(
         pretend_worktree, marker)).resolve()
@@ -632,7 +632,7 @@ def test_non_enumeration_holds_against_the_REAL_artifact_root_too(manifest):
 
     MEASURED WEAKNESS this closes. conftest.REPO_ROOT is derived from __file__,
     so inside a git worktree the declared rule `..` resolves to
-    agent-worktrees/worktrees and enumerates TWO agent directories rather than the ~25
+    <wt-dir>/worktrees and enumerates TWO worktree directories rather than the ~25
     trees under <home>/Research. Every "is not among the enumerated" assertion
     above still passes there -- over a population that is not the one a design rule is
     about. A pass over a population you did not confirm has verified nothing,
@@ -686,7 +686,7 @@ def _artifact_root():
 
     Anchored to the MAIN checkout deliberately. conftest.REPO_ROOT is derived
     from __file__, so inside a git worktree conftest.SCAN_ROOT resolves to
-    agent-worktrees/worktrees rather than to <home>/Research -- MEASURED, and reported
+    <wt-dir>/worktrees rather than to <home>/Research -- MEASURED, and reported
     as a finding by an earlier plan rather than patched here, because
     tools/tests/conftest.py belongs to an earlier plan.
     """
@@ -772,7 +772,7 @@ def test_a_pending_slug_whose_directory_exists_is_a_FINDING(manifest):
     assert not stale, (
         "%d slug(s) marked pending already have a directory under %s: %s -- "
         "the manifest is stale. status is owner/plan-set-set, so this is "
-        "an owner edit, never a build-agent one."
+        "an owner edit, never an automated one."
         % (len(stale), root, stale))
 
 

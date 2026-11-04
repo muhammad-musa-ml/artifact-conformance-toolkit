@@ -127,7 +127,7 @@ def main_repo_root():
     """The MAIN checkout's root, even when this runs from a git worktree.
 
     MEASURED, not anticipated. The first full-tree census taken for an earlier plan
-    ran inside agent-worktrees/worktrees/agent-<id>/ and recorded its root as
+    ran inside <wt-dir>/worktrees/<id>/ and recorded its root as
     `../../../../information` -- four levels, counted from the WORKTREE. That
     string is correct exactly once: in the worktree that produced it. Merged to
     main and read from the ordinary checkout it resolves to a directory that

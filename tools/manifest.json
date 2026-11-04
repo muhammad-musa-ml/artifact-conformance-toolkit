@@ -250,5 +250,5 @@
       "status": "pending"
     }
   ],
-  "status_field": "a design rule extension ratified by the owner as the status rule. Values are built | pending. A pending slug whose directory EXISTS is a FINDING (the manifest is stale). A built slug whose directory is MISSING is a FAIL. pending reaching 0 is a project requirement's closeout criterion. status is owner/plan-set-set and is NEVER written by a build agent -- the same posture as a design rule's waivers."
+  "status_field": "a design rule extension ratified by the owner as the status rule. Values are built | pending. A pending slug whose directory EXISTS is a FINDING (the manifest is stale). A built slug whose directory is MISSING is a FAIL. pending reaching 0 is a project requirement's closeout criterion. status is owner/plan-set-set and is NEVER written by an automated build -- the same posture as a design rule's waivers."
 }

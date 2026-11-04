@@ -563,7 +563,7 @@ def test_pre_push_hook_is_fail_closed():
         return
     # a recorded defect's DURABLE FIX: RESOLVE-equality, never string equality.
     #
-    # WHAT WAS MEASURED, five times. Creating an automated agent worktree
+    # WHAT WAS MEASURED, five times. Creating a linked worktree
     # rewrites core.hooksPath in the SHARED .git/config from `.githooks` to the
     # main checkout's ABSOLUTE `<repo>/.githooks`. The orchestrator read the
     # value immediately before and immediately after an earlier round worktree creation
@@ -591,7 +591,7 @@ def test_pre_push_hook_is_fail_closed():
     #
     # TWO ROOTS ARE ACCEPTED, and that is the point rather than a loophole. A
     # linked worktree SHARES .git/config with the main checkout, so from inside
-    # an agent the configured value legitimately names the MAIN checkout's
+    # a worktree the configured value legitimately names the MAIN checkout's
     # .githooks while REPO_ROOT is the worktree's. Accepting only the working
     # root would reproduce a recorded defect with a different spelling; accepting only the main
     # root would fail in an ordinary clone that has never had a worktree. Both
@@ -618,7 +618,7 @@ def test_pre_push_hook_is_fail_closed():
         "repository's tracked hooks directory. Accepted resolutions (both "
         "derived, neither typed): working checkout %s; main checkout %s. A "
         "linked worktree shares .git/config with the main checkout, so the "
-        "ABSOLUTE main-checkout spelling is correct from inside an agent and is "
+        "ABSOLUTE main-checkout spelling is correct from inside a worktree and is "
         "accepted -- what is rejected is a path pointing somewhere else "
         "entirely, and (above) core.hooksPath being unset."
         % (configured_value, resolved, accepted and sorted(accepted)[0],

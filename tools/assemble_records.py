@@ -10,7 +10,7 @@ assembled" becomes detectable rather than silent.
 
 Parallelization is ON and its granularity is `fine`, so record-writing plans run
 concurrently. A plan that appends to an assembled file DIRECTLY loses the other
-agent's write with no error at all -- so assembled files are GENERATED-ONLY,
+writer's write with no error at all -- so assembled files are GENERATED-ONLY,
 `build` writes them atomically under a blocking `mwlock`, and `lint` re-runs
 `build` in memory and byte-compares, which is what makes a direct append
 detectable instead of silently winning.
@@ -390,7 +390,7 @@ def build(kind_dir, target=None, timeout=mwlock.DEFAULT_TIMEOUT):
     target = os.path.abspath(str(target or default_target(kind_dir)))
 
     # The lock is held around the REPLACE, not merely around the render: two
-    # agents rendering concurrently is harmless, two replacing is not.
+    # writers rendering concurrently is harmless, two replacing is not.
     with mwlock.held(mwlock.lock_path_for(target), timeout=timeout):
         core.atomic_write_text(target, text, encoding="utf-8",
                                ensure_ascii=False)
@@ -418,7 +418,7 @@ def lint(kind_dir, target=None):
     verdict is "match" | "differs" | "missing" | "empty".
 
     This is the half that makes a DIRECT APPEND detectable. A plan that appends
-    to the assembled file rather than adding a fragment loses the next agent's
+    to the assembled file rather than adding a fragment loses the next writer's
     write silently; here it becomes a non-zero exit and a printed diff.
     """
     kind_dir, kind, fragments, ignored, superseded, text = _prepare(kind_dir)
@@ -543,7 +543,7 @@ def main(argv=None):
         sys.stdout.write(
             "FINDING: %s does not match its %d fragment(s). An assembled file "
             "is GENERATED-ONLY; a direct edit or append is lost by the next "
-            "build and loses a concurrent agent's write meanwhile.\n"
+            "build and loses a concurrent writer's write meanwhile.\n"
             % (result["target"], result["total"]))
         for line in diff:
             sys.stdout.write("%s\n" % line)

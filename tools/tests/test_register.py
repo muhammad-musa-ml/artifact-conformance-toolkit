@@ -645,8 +645,8 @@ def test_the_register_carries_no_carriage_return(tmp_path):
 def test_the_artifacts_root_is_derived_from_the_MAIN_repo_root(tmp_path):
     """a recorded defect. A worktree-relative anchor scans ~2 directories and PASSES.
 
-    `conftest.SCAN_ROOT` is `REPO_ROOT / ".."`, which inside an agent worktree
-    resolves to `<repo>/agent-worktrees/worktrees` -- measured at 2 directories holding
+    `conftest.SCAN_ROOT` is `REPO_ROOT / ".."`, which inside a linked worktree
+    resolves to `<repo>/<wt-dir>/worktrees` -- measured at 2 directories holding
     0 manifest slugs, against 25 directories holding 2 under the main root. A
     register generated over that population would look entirely fine.
     """

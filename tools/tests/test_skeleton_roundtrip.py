@@ -591,7 +591,7 @@ def commit_waivers(artifact, entries=()):
     a design rule (HARD): the run's waivers record is compared against the LAST COMMITTED
     copy read back through git, and a waiver present in the first and absent from
     the second is itself a finding. Writing it here and committing it at step 6
-    is the owner round trip the decision describes; a build agent that could
+    is the owner round trip the decision describes; an automated build that could
     silence a check without that round trip would not be running a checker.
 
     EMPTY BY DEFAULT. The round trip needs no waiver since an earlier plan item 13 closed;

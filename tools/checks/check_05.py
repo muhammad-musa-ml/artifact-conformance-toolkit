@@ -76,14 +76,14 @@ silencer, and all three are implemented here:
                                                  read off the run rather than
                                                  tracked by hand.
 
-`status` IS OWNER-SET AND PLAN-SET, NEVER BUILD-AGENT-SET. This module READS the
+`status` IS OWNER-SET AND PLAN-SET, NEVER BUILD-SET. This module READS the
 field and never writes it, exactly the posture a design rule gives waivers. A checker the
 thing being checked can edit is not a checker.
 
 THE POPULATION THIS CHECK COVERED IS PRINTED, INCLUDING THE ROOTS IT RESOLVED
 ------------------------------------------------------------------------------
 Measured in this phase, twice: a guard anchored on a repository-relative path
-ran over 2 directories instead of 25 from inside an agent worktree and PASSED,
+ran over 2 directories instead of 25 from inside a git worktree and PASSED,
 because its vacuity check only fired at zero. A count that is present but wrong
 reads as detail where a missing one would have read as a question.
 
@@ -420,7 +420,7 @@ def register_findings(expected, rows, facts, literal, derived,
                           "directory EXISTS. Something was built and the expected "
                           "set was not told, so every count derived from `status` "
                           "is now stale. REPAIR: an owner or plan sets status to "
-                          "`built`. A build agent must never set this field.",
+                          "`built`. A build must never set this field.",
             })
         elif fact["status"] == STATUS_BUILT and not fact["directory_exists"]:
             findings.append({

@@ -72,13 +72,13 @@ accident is easy because in an ordinary checkout they look related:
     MAIN checkout from inside a worktree, in a tree nobody was watching.
   * The MIRROR's location is defined by the ARTIFACTS, not by the checkout, so
     it is anchored to `main_repo_root()/..`. Anchoring it to the working root
-    would put it in `agent-worktrees/worktrees/backing-artifacts.md` when run from an
-    agent worktree -- which is the same defect wearing the opposite hat.
+    would put it in `<wt-dir>/worktrees/backing-artifacts.md` when run from a
+    linked worktree -- which is the same defect wearing the opposite hat.
 
 The artifacts SCAN ROOT is `main_repo_root()/..` for exactly this reason.
 `tools/tests/conftest.py` derives its own `SCAN_ROOT` as `REPO_ROOT / ".."`,
 which is correct in an ordinary checkout and resolves to
-`<repo>/agent-worktrees/worktrees` inside an agent worktree -- measured at 2 directories
+`<repo>/<wt-dir>/worktrees` inside a linked worktree -- measured at 2 directories
 holding 0 manifest slugs, against 25 directories holding 2 under the main root.
 A register generated over that population would look entirely fine.
 
@@ -144,7 +144,7 @@ def default_artifacts_root():
     """`<home>/Research/` -- the directory holding every artifact slug.
 
     Anchored to main_repo_root() so it resolves to the SAME directory from an
-    ordinary checkout and from an agent worktree. See the module docstring.
+    ordinary checkout and from a linked worktree. See the module docstring.
     """
     return os.path.abspath(os.path.join(census.main_repo_root(), os.pardir))
 

@@ -37,8 +37,8 @@ disappears from the population.
 
 ## Why the round trip is the control rather than the friction
 
-Build agents run unattended. A waiver a build agent can write is not a waiver,
-it is an off switch on the checker that agent is being measured by. Requiring a
+Automated builds run unattended. A waiver an automated build can write is not a waiver,
+it is an off switch on the checker it is being measured by. Requiring a
 human, a reason and a commit is the whole mechanism, so the run's copy is
 compared against `git show HEAD:./waivers.json` -- read back from git, never from
 a cached copy the same process wrote.
